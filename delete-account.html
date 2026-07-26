@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delete Your Account · 37 — The Math Puzzle | HiiPointe Games</title>
+<meta name="description" content="How to permanently delete your 37 — The Math Puzzle account and all associated data. Delete it yourself inside the app in seconds, or request deletion by email.">
+<link rel="canonical" href="https://www.37themathpuzzle.com/delete-account">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#070510;
+    --deep:#0d0a1f;
+    --gold:#f5c84b;
+    --gold-bright:#ffe07a;
+    --red:#ff4d4d;
+    --blue:#4d7dff;
+    --green:#3ecf6a;
+    --ink:#eae6ff;
+    --muted:#a39fc4;
+    --card:rgba(255,255,255,.04);
+    --line:rgba(255,255,255,.10);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--black);
+    color:var(--ink);
+    font-family:'Outfit',sans-serif;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  a{color:var(--gold-bright);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* cosmic backdrop (self-contained, no external assets) */
+  .cosmos{
+    position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(ellipse 55% 45% at 72% 8%, rgba(166,77,255,.28), transparent 68%),
+      radial-gradient(ellipse 50% 42% at 15% 26%, rgba(77,125,255,.22), transparent 70%),
+      radial-gradient(ellipse 45% 40% at 88% 62%, rgba(255,77,160,.15), transparent 70%),
+      radial-gradient(ellipse 60% 50% at 50% 98%, rgba(245,200,75,.10), transparent 72%),
+      var(--black);
+  }
+  .wrap{width:100%;max-width:760px;margin:0 auto;padding:0 22px}
+
+  /* nav */
+  nav{border-bottom:1px solid var(--line);position:sticky;top:0;
+      background:rgba(7,5,16,.72);backdrop-filter:blur(10px);z-index:10}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;
+          padding:14px 22px;max-width:760px;margin:0 auto}
+  .brand{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.25rem;
+         display:flex;align-items:center;gap:2px}
+  .brand .n{color:var(--gold)}
+  .brand .rest{color:var(--ink);font-weight:600;font-size:.95rem;margin-left:6px}
+  .nav-in a.home{font-size:.9rem;color:var(--muted);font-weight:500}
+  .nav-in a.home:hover{color:var(--gold-bright);text-decoration:none}
+
+  /* main */
+  main{flex:1 0 auto;padding:48px 0 64px}
+  .badge{display:inline-flex;align-items:center;gap:8px;
+         background:rgba(255,77,77,.10);border:1px solid rgba(255,77,77,.32);
+         color:#ff9d9d;font-size:.8rem;font-weight:600;letter-spacing:.4px;
+         text-transform:uppercase;padding:6px 14px;border-radius:999px;margin-bottom:20px}
+  h1{font-family:'Fredoka',sans-serif;font-weight:700;
+     font-size:clamp(2rem,5vw,2.8rem);line-height:1.12;color:#fff;margin-bottom:14px}
+  .lede{color:var(--muted);font-size:1.08rem;max-width:60ch;margin-bottom:8px}
+
+  h2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.4rem;color:#fff;
+     margin:44px 0 6px;display:flex;align-items:center;gap:10px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;
+          width:32px;height:32px;border-radius:9px;font-size:1rem;
+          background:linear-gradient(180deg,var(--gold),#e0a92f);color:#1a1206;flex-shrink:0}
+  h3{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.08rem;color:#fff;margin-bottom:6px}
+  .sub{color:var(--muted);font-size:.95rem;margin-bottom:16px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+        padding:24px 26px;margin-top:14px}
+  .card.recommended{border-color:rgba(62,207,106,.30);
+                    background:linear-gradient(180deg,rgba(62,207,106,.06),rgba(255,255,255,.03))}
+  .tag-rec{display:inline-block;background:rgba(62,207,106,.14);
+           border:1px solid rgba(62,207,106,.34);color:#8ef0b0;
+           font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;
+           padding:3px 10px;border-radius:999px;margin-bottom:12px}
+
+  ol.steps{list-style:none;counter-reset:step;margin:6px 0 0}
+  ol.steps li{counter-increment:step;position:relative;padding:10px 0 10px 44px;
+              border-top:1px solid var(--line)}
+  ol.steps li:first-child{border-top:none}
+  ol.steps li::before{content:counter(step);position:absolute;left:0;top:11px;
+              width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);
+              border:1px solid var(--line);color:var(--gold-bright);
+              font-family:'Fredoka',sans-serif;font-weight:600;font-size:.9rem;
+              display:flex;align-items:center;justify-content:center}
+  ol.steps b{color:#fff;font-weight:600}
+
+  ul.plain{list-style:none;margin:6px 0 0}
+  ul.plain li{position:relative;padding:6px 0 6px 24px;color:var(--ink)}
+  ul.plain li::before{content:"";position:absolute;left:4px;top:15px;
+              width:6px;height:6px;border-radius:50%;background:var(--gold)}
+
+  .btn-email{display:inline-flex;align-items:center;gap:9px;margin-top:16px;
+             background:linear-gradient(180deg,var(--gold),#e0a92f);color:#1a1206;
+             font-family:'Fredoka',sans-serif;font-weight:600;font-size:.98rem;
+             padding:12px 22px;border-radius:12px}
+  .btn-email:hover{transform:translateY(-2px);text-decoration:none;
+             box-shadow:0 8px 24px rgba(245,200,75,.22);transition:.2s}
+
+  .note{display:flex;gap:12px;align-items:flex-start;
+        background:rgba(255,77,77,.07);border:1px solid rgba(255,77,77,.26);
+        border-radius:14px;padding:16px 18px;margin-top:28px}
+  .note svg{flex-shrink:0;margin-top:2px}
+  .note p{font-size:.95rem;color:#ffc9c9}
+  .note b{color:#fff}
+
+  code{background:rgba(255,255,255,.08);border:1px solid var(--line);
+       border-radius:6px;padding:2px 7px;font-size:.9em;color:var(--gold-bright);
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  .help{margin-top:36px;color:var(--muted);font-size:.95rem}
+
+  footer{border-top:1px solid var(--line);padding:26px 0;margin-top:8px}
+  footer .links{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:12px}
+  footer .links a{color:var(--muted);font-size:.9rem}
+  footer .links a:hover{color:var(--gold-bright);text-decoration:none}
+  footer .copy{color:var(--muted);font-size:.85rem;opacity:.8}
+
+  @media (max-width:520px){
+    main{padding:32px 0 48px}
+    .card{padding:20px 18px}
+    h2{font-size:1.25rem}
+  }
+</style>
+</head>
+<body>
+<div class="cosmos" aria-hidden="true"></div>
+
+<nav>
+  <div class="nav-in">
+    <a class="brand" href="/" aria-label="37 — The Math Puzzle home">
+      <span class="n">37</span><span class="rest">The Math Puzzle</span>
+    </a>
+    <a class="home" href="/">← Back to home</a>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+    <span class="badge">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff9d9d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+      Account &amp; Data Deletion
+    </span>
+
+    <h1>Delete your 37 account</h1>
+    <p class="lede">
+      This page explains how to permanently delete your <strong>37 — The Math Puzzle</strong>
+      account and all of the data linked to it. You can do it yourself inside the app in a
+      few seconds, or ask us to do it for you by email.
+    </p>
+
+    <!-- METHOD 1 -->
+    <h2><span class="num">1</span> Delete it yourself in the app</h2>
+    <p class="sub">The fastest way — your account and data are removed immediately.</p>
+    <div class="card recommended">
+      <span class="tag-rec">Recommended · Instant</span>
+      <ol class="steps">
+        <li>Open the <b>37 — The Math Puzzle</b> app and make sure you're signed in to the account you want to delete.</li>
+        <li>Tap the <b>menu icon</b> (☰) in the top-left corner to open the side menu.</li>
+        <li>Scroll down and tap <b>Delete Account</b> (the red trash icon).</li>
+        <li>Tap <b>Yes, I want to delete my account</b> to confirm.</li>
+        <li>Tap <b>Permanently Delete My Account</b>.</li>
+      </ol>
+      <p class="sub" style="margin:16px 0 0">
+        Your account is deleted right away and you're signed out. This cannot be undone.
+      </p>
+    </div>
+
+    <!-- METHOD 2 -->
+    <h2><span class="num">2</span> Request deletion by email</h2>
+    <p class="sub">Use this if you've uninstalled the app or can't sign in.</p>
+    <div class="card">
+      <h3>Email us from the account you want deleted</h3>
+      <p>
+        Send an email to <a href="mailto:contactus@hiipointegames.com?subject=Delete%20my%2037%20account">contactus@hiipointegames.com</a>
+        with the subject line <code>Delete my 37 account</code>. To help us find and verify
+        your account, please include:
+      </p>
+      <ul class="plain">
+        <li>The <b>email address</b> or <b>username</b> on your 37 account</li>
+        <li>A short note confirming you want the account and all its data permanently deleted</li>
+      </ul>
+      <p style="margin-top:14px">
+        Sending the request from the email address on your account is the quickest way for us
+        to verify it's really you. We'll confirm by email once it's done, and we complete all
+        verified requests <b>within 30 days</b> (usually much sooner).
+      </p>
+      <a class="btn-email" href="mailto:contactus@hiipointegames.com?subject=Delete%20my%2037%20account&amp;body=Please%20permanently%20delete%20my%2037%20account%20and%20all%20its%20data.%0A%0AMy%20account%20email%20or%20username%3A%20">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1206" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+        Email a deletion request
+      </a>
+    </div>
+
+    <!-- WHAT GETS DELETED -->
+    <h2><span class="num">3</span> What gets deleted</h2>
+    <p class="sub">Deleting your account permanently removes all of the following:</p>
+    <div class="card">
+      <ul class="plain">
+        <li>Your account and sign-in credentials (email address / login)</li>
+        <li>Your player profile and username</li>
+        <li>All game stats, scores, solve times, streaks, and progress</li>
+        <li>Your Daily Challenge history and leaderboard entries</li>
+        <li>Your Blitz Colosseum battle records and friend connections</li>
+        <li>Any achievements, badges, and podium history tied to your account</li>
+      </ul>
+      <p style="margin-top:14px;color:var(--muted);font-size:.95rem">
+        We keep <b>no</b> personal profile of you after deletion. Anonymous, aggregated
+        information that is not linked to your identity (for example, overall puzzle
+        difficulty statistics) may remain, and routine encrypted backups are purged on
+        their normal rotation.
+      </p>
+    </div>
+
+    <div class="note">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff8a8a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <p><b>This is permanent.</b> Once your account is deleted it cannot be recovered, and your
+      stats, streaks, and progress are gone for good. If you only want a break, you can simply
+      sign out or delete the app instead — your account will still be there when you come back.</p>
+    </div>
+
+    <p class="help">
+      Questions about deleting your account or your data? Email us any time at
+      <a href="mailto:contactus@hiipointegames.com">contactus@hiipointegames.com</a>,
+      or read our <a href="https://hiipointegames.com/privacy-policy">Privacy Policy</a>.
+    </p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/">Home</a>
+      <a href="https://hiipointegames.com/privacy-policy">Privacy Policy</a>
+      <a href="https://hiipointegames.com/terms-and-conditions">Terms &amp; Conditions</a>
+      <a href="mailto:contactus@hiipointegames.com">Contact Us</a>
+    </div>
+    <p class="copy">© 2026 HiiPointe Games LLC · Smart games for smart people.</p>
+  </div>
+</footer>
+</body>
+</html>
