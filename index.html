@@ -317,6 +317,11 @@
 
   /* ---- footer ---- */
   footer{border-top:1px solid rgba(255,255,255,.08);padding:34px 0 28px;margin-top:0}
+  .footer-links{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 22px;margin-bottom:16px}
+  .footer-links a{color:var(--muted);font-size:.9rem;font-weight:500;transition:color .2s}
+  .footer-links a:hover{color:var(--gold-bright)}
+  .footer-links a.del{color:#ff9d9d}
+  .footer-links a.del:hover{color:var(--red)}
   .copy{color:#6b6786;font-size:.82rem;text-align:center;margin-top:0}
 
   /* reveal animation */
@@ -638,6 +643,12 @@
 <!-- FOOTER -->
 <footer>
   <div class="wrap">
+    <div class="footer-links">
+      <a href="https://hiipointegames.com/privacy-policy">Privacy Policy</a>
+      <a href="https://hiipointegames.com/terms-and-conditions">Terms &amp; Conditions</a>
+      <a href="mailto:contactus@hiipointegames.com">Contact Us</a>
+      <a class="del" href="/delete-account">Delete Account</a>
+    </div>
     <p class="copy">© 2026 HiiPointe Games LLC · Smart games for smart people.</p>
   </div>
 </footer>
