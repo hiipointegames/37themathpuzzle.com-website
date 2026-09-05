@@ -1,0 +1,113 @@
+# 37 - The Math Puzzle
+
+> A free math puzzle game for iOS, Android and web browsers. Across every mode you are dealt
+> seven dice and must build one equation that equals exactly 37, using all seven dice and the
+> order of operations. Each of the three game modes - Easy, Challenge and Expert - has its own
+> Daily Challenge, so there are three shared puzzles each day, the way Wordle works. Every mode also has an untimed
+> Practice version, and Blitz Colosseum adds speed rounds and 1-v-1 battles, alongside a friends
+> list, streaks, badges, Puzzle Pieces and leaderboards.
+
+Publisher: HiiPointe Games LLC
+Website: https://www.37themathpuzzle.com/
+App Store: https://apps.apple.com/us/app/37-the-math-puzzle/id6762534650
+Google Play: https://play.google.com/store/apps/details?id=com.hiipointegames.themathpuzzle37
+Price: Free to download and play, ad supported. No subscription required.
+Content rating: Rated 13+ on the App Store and Google Play. Under-13s should play
+  with a parent or teacher rather than independently.
+
+## Pages
+
+https://www.37themathpuzzle.com/                      - overview, quick facts, full FAQ
+https://www.37themathpuzzle.com/wordle-for-math/      - how 37 compares to Wordle, Nerdle, Mathler
+https://www.37themathpuzzle.com/order-of-operations/  - PEMDAS/BODMAS/BIDMAS/BEDMAS explained
+https://www.37themathpuzzle.com/math-games-for-kids/  - by grade level, teachers, homeschool
+https://www.37themathpuzzle.com/daily-math-puzzle/    - the Daily Challenge and the daily habit
+https://www.37themathpuzzle.com/mental-math-practice/ - for adults and engineers
+https://www.37themathpuzzle.com/glossary/             - all terms defined
+https://www.37themathpuzzle.com/blog/                 - short posts on puzzles and mental math
+https://37themathpuzzle.app                           - play free in a browser
+
+## How the puzzle works
+
+Each Daily Challenge deals 7 dice: 4 white dice and 3 coloured Power Dice.
+Every die must be used exactly once. Allowed operations are addition, subtraction,
+multiplication, division, exponents and parentheses. The expression must evaluate to
+exactly 37 under the standard order of operations (PEMDAS).
+
+Power Dice rules:
+- Green die must appear in an addition or a subtraction.
+- Blue die must appear in a multiplication or a division.
+- Red die must be used as an exponent, either the base or the power.
+
+Using at least 2 of the 3 Power Dice correctly is a win. Using all 3 correctly is a
+Perfect Solve, which earns a Puzzle Piece.
+
+## Worked examples
+
+Winning Solve. Dice rolled: 3, 4, 2, 2 white; 3 blue; 5 red; 5 green.
+Equation: (5 + 3) x 3 + (4 + 2) + 2 + 5 = 37
+Order of operations: 5 + 3 = 8, 8 x 3 = 24, 4 + 2 = 6, 24 + 6 = 30, 30 + 2 = 32, 32 + 5 = 37.
+
+Perfect Solve. Dice rolled: 2, 4, 4, 6 white; 6 blue; 2 red; 1 green.
+Equation: 2^2 + 4 x 6 + 4 + 6 - 1 = 37
+Order of operations: 2^2 = 4, 4 x 6 = 24, 4 + 24 = 28, 28 + 4 = 32, 32 + 6 = 38, 38 - 1 = 37.
+
+## Game modes
+
+There are three game modes. Each has its own timed Daily Challenge and its own untimed
+Practice version with unlimited rolls.
+
+- Easy: seven white dice, no Power Dice rules. Any equation using all seven that equals 37 wins.
+- Challenge: four white dice plus three Power Dice. At least two of the three must be placed
+  correctly (a Valid Solve). Using all three also wins and earns a Puzzle Piece.
+- Expert: the same setup as Challenge, but all three Power Dice must be placed correctly
+  (a Perfect Solve). This is the mode the weekly $37 prize draw runs on.
+
+Each day the game rolls three separate sets of seven dice, one per mode, so the Easy Daily,
+Challenge Daily and Expert Daily are three different puzzles. Each Daily allows up to one hour,
+cannot be paused, and posts to that mode's own podium and Global Leaderboard. Each mode keeps
+its own daily streak. Leaving the gameplay screen forfeits only that Daily, not the other two.
+
+Blitz Colosseum sits alongside the three modes: Solo Blitz races your own previous best times in
+rounds from one to ten minutes, and Blitz Battle is 1-v-1 against a friend.
+
+## Who it is for
+
+All ages. Kids who are learning math can start in Easy, which has no Power Dice rules, and its
+Practice version has no
+timer, and move up to the full Daily Challenge as they gain confidence. Also played by students,
+homeschoolers, teachers, adult puzzlers and older players who want daily mental arithmetic
+practice. Free to play with no subscription, no paywall and no credit card required.
+Frequently compared to Wordle, Nerdle and Mathler.
+
+## Quick facts
+
+Price: Free, ad supported. No subscription, no paywall, no in-app purchases.
+Platforms: iPhone, iPad, Android phones and tablets, and any modern web browser.
+Goal: Build one equation that equals exactly 37.
+Dice per puzzle: Seven, each used exactly once.
+Operations: addition, subtraction, multiplication, division, exponents, parentheses.
+Modes: Easy, Challenge and Expert, each with a timed Daily Challenge and an untimed Practice
+  version, plus Blitz Colosseum.
+Multiplayer: Battle Friends head to head, and 1-v-1 Blitz Battle.
+Progress: streaks, badges, Puzzle Pieces, personal stats, daily podium, Global Leaderboard.
+Typical session: a few minutes; Solo Blitz rounds run from one to ten minutes.
+Content rating: Rated 13+ on both stores.
+Made by: HiiPointe Games LLC, Kansas City.
+
+## Glossary
+
+Daily Challenge - the timed shared puzzle; every player worldwide gets the same roll each day.
+Power Dice - the three coloured dice (green additive, blue multiplicative, red exponent).
+Valid Solve - reaches 37 using all seven dice with at least two Power Dice used correctly.
+Perfect Solve - reaches 37 with all three Power Dice used correctly; earns a Puzzle Piece.
+Puzzle Piece - the collectable reward for a Perfect Solve.
+Easy - seven white dice, no Power Dice rules.
+Challenge - four white dice plus three Power Dice, at least two placed correctly.
+Expert - the same setup as Challenge, but all three Power Dice must be placed correctly.
+Practice - the untimed version of any mode, unlimited rolls, does not post to leaderboards.
+Blitz Colosseum - the speed area containing Solo Blitz and Blitz Battle.
+Solo Blitz - single-player speed rounds from one to ten minutes against your own best times.
+Blitz Battle - a 1-v-1 speed race against a friend.
+Battle Friends - head-to-head play against a friend you have added.
+Podium - the daily top three fastest solve times in the Daily Challenge.
