@@ -1026,6 +1026,13 @@
       .store-btn svg{width:27px !important;height:27px !important}
       .store-btn .lg{font-size:1.14rem !important}
     }
+
+    @media(max-width:860px){
+      /* let a wide comparison table scroll inside its own box instead of
+         stretching the whole page wider than the viewport */
+      .cmp{display:block;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+      .cmp thead,.cmp tbody{display:table;width:auto;min-width:100%}
+    }
 </style>
 </head>
 <body>
