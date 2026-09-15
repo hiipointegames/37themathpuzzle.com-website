@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy · 37 — The Math Puzzle | HiiPointe Games</title>
+<meta name="description" content="How 37 — The Math Puzzle collects, uses and protects your information, including advertising and analytics disclosures.">
+<link rel="canonical" href="https://www.37themathpuzzle.com/privacy">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#070510;
+    --deep:#0d0a1f;
+    --gold:#f5c84b;
+    --gold-bright:#ffe07a;
+    --red:#ff4d4d;
+    --blue:#4d7dff;
+    --green:#3ecf6a;
+    --ink:#eae6ff;
+    --muted:#a39fc4;
+    --card:rgba(255,255,255,.04);
+    --line:rgba(255,255,255,.10);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--black);
+    color:var(--ink);
+    font-family:'Outfit',sans-serif;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  a{color:var(--gold-bright);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* cosmic backdrop (self-contained, no external assets) */
+  .cosmos{
+    position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(ellipse 55% 45% at 72% 8%, rgba(166,77,255,.28), transparent 68%),
+      radial-gradient(ellipse 50% 42% at 15% 26%, rgba(77,125,255,.22), transparent 70%),
+      radial-gradient(ellipse 45% 40% at 88% 62%, rgba(255,77,160,.15), transparent 70%),
+      radial-gradient(ellipse 60% 50% at 50% 98%, rgba(245,200,75,.10), transparent 72%),
+      var(--black);
+  }
+  .wrap{width:100%;max-width:760px;margin:0 auto;padding:0 22px}
+
+  /* nav */
+  nav{border-bottom:1px solid var(--line);position:sticky;top:0;
+      background:rgba(7,5,16,.72);backdrop-filter:blur(10px);z-index:10}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;
+          padding:14px 22px;max-width:760px;margin:0 auto}
+  .brand{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.25rem;
+         display:flex;align-items:center;gap:2px}
+  .brand .n{color:var(--gold)}
+  .brand .rest{color:var(--ink);font-weight:600;font-size:.95rem;margin-left:6px}
+  .nav-in a.home{font-size:.9rem;color:var(--muted);font-weight:500}
+  .nav-in a.home:hover{color:var(--gold-bright);text-decoration:none}
+
+  /* main */
+  main{flex:1 0 auto;padding:48px 0 64px}
+  .badge{display:inline-flex;align-items:center;gap:8px;
+         background:rgba(255,77,77,.10);border:1px solid rgba(255,77,77,.32);
+         color:#ff9d9d;font-size:.8rem;font-weight:600;letter-spacing:.4px;
+         text-transform:uppercase;padding:6px 14px;border-radius:999px;margin-bottom:20px}
+  h1{font-family:'Fredoka',sans-serif;font-weight:700;
+     font-size:clamp(2rem,5vw,2.8rem);line-height:1.12;color:#fff;margin-bottom:14px}
+  .lede{color:var(--muted);font-size:1.08rem;max-width:60ch;margin-bottom:8px}
+
+  h2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.4rem;color:#fff;
+     margin:44px 0 6px;display:flex;align-items:center;gap:10px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;
+          width:32px;height:32px;border-radius:9px;font-size:1rem;
+          background:linear-gradient(180deg,var(--gold),#e0a92f);color:#1a1206;flex-shrink:0}
+  h3{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.08rem;color:#fff;margin-bottom:6px}
+  .sub{color:var(--muted);font-size:.95rem;margin-bottom:16px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+        padding:24px 26px;margin-top:14px}
+  .card.recommended{border-color:rgba(62,207,106,.30);
+                    background:linear-gradient(180deg,rgba(62,207,106,.06),rgba(255,255,255,.03))}
+  .tag-rec{display:inline-block;background:rgba(62,207,106,.14);
+           border:1px solid rgba(62,207,106,.34);color:#8ef0b0;
+           font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;
+           padding:3px 10px;border-radius:999px;margin-bottom:12px}
+
+  ol.steps{list-style:none;counter-reset:step;margin:6px 0 0}
+  ol.steps li{counter-increment:step;position:relative;padding:10px 0 10px 44px;
+              border-top:1px solid var(--line)}
+  ol.steps li:first-child{border-top:none}
+  ol.steps li::before{content:counter(step);position:absolute;left:0;top:11px;
+              width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);
+              border:1px solid var(--line);color:var(--gold-bright);
+              font-family:'Fredoka',sans-serif;font-weight:600;font-size:.9rem;
+              display:flex;align-items:center;justify-content:center}
+  ol.steps b{color:#fff;font-weight:600}
+
+  ul.plain{list-style:none;margin:6px 0 0}
+  ul.plain li{position:relative;padding:6px 0 6px 24px;color:var(--ink)}
+  ul.plain li::before{content:"";position:absolute;left:4px;top:15px;
+              width:6px;height:6px;border-radius:50%;background:var(--gold)}
+
+  .btn-email{display:inline-flex;align-items:center;gap:9px;margin-top:16px;
+             background:linear-gradient(180deg,var(--gold),#e0a92f);color:#1a1206;
+             font-family:'Fredoka',sans-serif;font-weight:600;font-size:.98rem;
+             padding:12px 22px;border-radius:12px}
+  .btn-email:hover{transform:translateY(-2px);text-decoration:none;
+             box-shadow:0 8px 24px rgba(245,200,75,.22);transition:.2s}
+
+  .note{display:flex;gap:12px;align-items:flex-start;
+        background:rgba(255,77,77,.07);border:1px solid rgba(255,77,77,.26);
+        border-radius:14px;padding:16px 18px;margin-top:28px}
+  .note svg{flex-shrink:0;margin-top:2px}
+  .note p{font-size:.95rem;color:#ffc9c9}
+  .note b{color:#fff}
+
+  code{background:rgba(255,255,255,.08);border:1px solid var(--line);
+       border-radius:6px;padding:2px 7px;font-size:.9em;color:var(--gold-bright);
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  .help{margin-top:36px;color:var(--muted);font-size:.95rem}
+
+  footer{border-top:1px solid var(--line);padding:26px 0;margin-top:8px}
+  footer .links{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:12px}
+  footer .links a{color:var(--muted);font-size:.9rem}
+  footer .links a:hover{color:var(--gold-bright);text-decoration:none}
+  footer .copy{color:var(--muted);font-size:.85rem;opacity:.8}
+
+  @media (max-width:520px){
+    main{padding:32px 0 48px}
+    .card{padding:20px 18px}
+    h2{font-size:1.25rem}
+  }
+</style>
+<meta name="google-adsense-account" content="ca-pub-6906001828646372">
+</head>
+<body>
+<div class="cosmos" aria-hidden="true"></div>
+
+<nav>
+  <div class="nav-in">
+    <a class="brand" href="/" aria-label="37 — The Math Puzzle home">
+      <span class="n">37</span><span class="rest">The Math Puzzle</span>
+    </a>
+    <a class="home" href="/">← Back to home</a>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap prose">
+<nav class="top"><a href="/">&larr; Back to 37, The Math Puzzle</a></nav>
+    <h1>Privacy Policy</h1>
+    <p class="meta">Last Updated: July 26, 2026</p>
+
+    <p>HiiPointe Games LLC (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;)
+      operates 37 - The Math Puzzle, available as a mobile app and as a website at
+      37themathpuzzle.app and www.37themathpuzzle.com (the &ldquo;App&rdquo;). This Privacy Policy explains what
+      information we collect, how we use it, and your choices when you use the App and these websites.</p>
+    <p>By using the App and these websites, you agree to this Privacy Policy.</p>
+
+    <h2>1. Information We Collect</h2>
+    <p>We collect only the minimum information necessary to operate the App and these websites.</p>
+
+    <h3>Required Username (Non-Personal)</h3>
+    <p>A username (display name) is required to play. This username:</p>
+    <ul>
+      <li>identifies players within the game</li>
+      <li>displays scores, leaderboards, and statistics</li>
+      <li>saves gameplay progress</li>
+    </ul>
+    <p>Usernames are pseudonymous, are not required to include real names, and are
+      not considered personal information. Players should not include personal
+      information in their username.</p>
+
+    <h3>Optional Account Linking (Email and Password)</h3>
+    <p>Players may optionally create a linked account to save and transfer progress
+      across devices. If you choose to link an account, we collect:</p>
+    <ul>
+      <li>Email address</li>
+      <li>Password</li>
+    </ul>
+    <p>This information is used only to:</p>
+    <ul>
+      <li>authenticate your account</li>
+      <li>restore progress</li>
+      <li>enable multi-device access</li>
+      <li>provide account recovery</li>
+    </ul>
+    <p>Providing this information is voluntary. The App can be fully used without
+      creating an account, but progress may not be recoverable without one. Email
+      addresses are considered personal information.</p>
+
+    <h3>Automatically Collected Information</h3>
+    <p>We may automatically collect limited technical information, such as:</p>
+    <ul>
+      <li>device type and operating system</li>
+      <li>IP address</li>
+      <li>anonymous device or advertising identifiers</li>
+      <li>crash reports and diagnostics</li>
+      <li>general gameplay metrics</li>
+    </ul>
+    <p>This data is used to operate, maintain, and improve the App and these websites.</p>
+
+    <h2>2. Advertising and Third-Party Services</h2>
+    <p>The App may use third-party advertising, analytics, hosting, and
+      authentication providers. On the web version at 37themathpuzzle.app and www.37themathpuzzle.com,
+      advertising is served through <strong>Google AdSense</strong>. Third-party
+      vendors, including Google, use cookies to serve ads based on your prior
+      visits to this and other websites.</p>
+    <p>These services may collect device information, advertising identifiers, IP
+      address, and ad-interaction data according to their own privacy policies. We
+      do not control third-party data practices.</p>
+    <p>You may opt out of personalized advertising by visiting
+      <a href="https://www.google.com/settings/ads" rel="noopener" target="_blank">Google Ads Settings</a>
+      or <a href="https://www.aboutads.info/choices/" rel="noopener" target="_blank">aboutads.info/choices</a>.
+      On mobile, you may also limit or disable personalized advertising through your
+      device&rsquo;s privacy or advertising settings; these controls are provided by
+      your device&rsquo;s operating system and do not require action within the App and these websites.
+      See <a href="https://policies.google.com/technologies/partner-sites" rel="noopener" target="_blank">Google&rsquo;s partner policy</a>
+      for how Google uses data.</p>
+
+    <h2>3. How We Use Information</h2>
+    <p>We use information to:</p>
+    <ul>
+      <li>provide gameplay functionality</li>
+      <li>save player progress</li>
+      <li>enable optional account features</li>
+      <li>maintain performance and security</li>
+      <li>serve advertisements</li>
+      <li>comply with legal obligations</li>
+    </ul>
+    <p>We do not sell or rent personal information.</p>
+
+    <h2>4. Data Sharing</h2>
+    <p>We may share information only with service providers that help operate the
+      App (such as hosting, analytics, authentication, or advertising partners).
+      These providers may process information solely to perform services on our
+      behalf.</p>
+
+    <h2>5. Data Retention</h2>
+    <ul>
+      <li>Gameplay and username data may be stored locally on your device or on our servers</li>
+      <li>Account information is retained while your account remains active</li>
+    </ul>
+    <p>You may request deletion of your account and associated personal information
+      at any time by contacting us directly via email at
+      <a href="mailto:contactus@hiipointegames.com">contactus@hiipointegames.com</a>.</p>
+
+    <h2>6. Your Rights</h2>
+    <p>Depending on your location, you may have the right to access, correct, or
+      delete your personal information. To make a request, contact us below.</p>
+
+    <h2>7. Children&rsquo;s Privacy</h2>
+    <p>The App is intended for general audiences. We comply with the Children&rsquo;s
+      Online Privacy Protection Act (COPPA) and similar laws. We do not knowingly
+      collect personal information from children under 13 without parental consent.
+      Because account linking requires an email address, children should not create
+      accounts without parental permission. If we learn personal information has been
+      collected improperly, we will delete it.</p>
+
+    <h2>8. Security</h2>
+    <p>We use reasonable administrative, technical, and physical safeguards to
+      protect information, but no system is completely secure.</p>
+
+    <h2>9. International Processing</h2>
+    <p>Information may be processed and stored in the United States or other
+      countries where our service providers operate.</p>
+
+    <h2>10. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. Continued use of the App and these websites
+      after updates indicates acceptance.</p>
+
+    <h2>Promotions and Prize Draws</h2>
+      <p>We run a free weekly prize draw. Entry requires a saved account with an
+        email address attached, and entrants must be 18 or older and resident in the
+        United States. No purchase is necessary and no payment is ever required to
+        enter or to win. The official rules, including the full eligibility and
+        entry terms, are published at
+        <a href="https://www.37themathpuzzle.com/#prize">37themathpuzzle.com</a>.</p>
+      <p>In connection with the draw we use personal information as follows:</p>
+      <ul>
+        <li><strong>Your email address</strong> is used to contact you if you win.
+          We send at most two emails about a prize.</li>
+        <li><strong>Payment details you choose to give us.</strong> If you win, we
+          ask you to reply with a Venmo or Zelle handle so the prize can be sent.
+          We use it only to pay that prize, we do not store card or bank account
+          numbers, and we delete the handle once payment has cleared and any period
+          we are required to keep records for has passed.</li>
+        <li><strong>Your username, the mode you won in, and your solve time</strong>
+          may be announced publicly, including on our social channels and on this
+          website. We do not publish your real name, your email address or your
+          payment details.</li>
+      </ul>
+      <p>If you would prefer your username not to be announced, email us at
+        <a href="mailto:contactus@hiipointegames.com">contactus@hiipointegames.com</a>
+        and we will withhold it. You can still claim the prize.</p>
+      <p>This promotion is sponsored solely by HiiPointe Games LLC. It is not
+        sponsored, endorsed or administered by, or associated with, Apple Inc. or
+        Google LLC.</p>
+      <h2>11. Contact Us</h2>
+    <p>HiiPointe Games LLC<br />
+      Kansas City, Missouri, United States<br />
+      Email: <a href="mailto:contactus@hiipointegames.com">contactus@hiipointegames.com</a></p>
+
+    <h2>Acceptance</h2>
+    <p>By using 37 - The Math Puzzle, you acknowledge that you have read and agree to
+      this Privacy Policy.</p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/">Home</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms &amp; Conditions</a>
+      <a href="mailto:contactus@hiipointegames.com">Contact Us</a>
+    </div>
+    <p class="copy">© 2026 HiiPointe Games LLC · Smart games for smart people.</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terms and Conditions · 37 — The Math Puzzle | HiiPointe Games</title>
+<meta name="description" content="The terms governing use of 37 — The Math Puzzle, on the web and in the iOS and Android apps.">
+<link rel="canonical" href="https://www.37themathpuzzle.com/terms">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#070510;
+    --deep:#0d0a1f;
+    --gold:#f5c84b;
+    --gold-bright:#ffe07a;
+    --red:#ff4d4d;
+    --blue:#4d7dff;
+    --green:#3ecf6a;
+    --ink:#eae6ff;
+    --muted:#a39fc4;
+    --card:rgba(255,255,255,.04);
+    --line:rgba(255,255,255,.10);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--black);
+    color:var(--ink);
+    font-family:'Outfit',sans-serif;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  a{color:var(--gold-bright);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* cosmic backdrop (self-contained, no external assets) */
+  .cosmos{
+    position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(ellipse 55% 45% at 72% 8%, rgba(166,77,255,.28), transparent 68%),
+      radial-gradient(ellipse 50% 42% at 15% 26%, rgba(77,125,255,.22), transparent 70%),
+      radial-gradient(ellipse 45% 40% at 88% 62%, rgba(255,77,160,.15), transparent 70%),
+      radial-gradient(ellipse 60% 50% at 50% 98%, rgba(245,200,75,.10), transparent 72%),
+      var(--black);
+  }
+  .wrap{width:100%;max-width:760px;margin:0 auto;padding:0 22px}
+
+  /* nav */
+  nav{border-bottom:1px solid var(--line);position:sticky;top:0;
+      background:rgba(7,5,16,.72);backdrop-filter:blur(10px);z-index:10}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;
+          padding:14px 22px;max-width:760px;margin:0 auto}
+  .brand{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.25rem;
+         display:flex;align-items:center;gap:2px}
+  .brand .n{color:var(--gold)}
+  .brand .rest{color:var(--ink);font-weight:600;font-size:.95rem;margin-left:6px}
+  .nav-in a.home{font-size:.9rem;color:var(--muted);font-weight:500}
+  .nav-in a.home:hover{color:var(--gold-bright);text-decoration:none}
+
+  /* main */
+  main{flex:1 0 auto;padding:48px 0 64px}
+  .badge{display:inline-flex;align-items:center;gap:8px;
+         background:rgba(255,77,77,.10);border:1px solid rgba(255,77,77,.32);
+         color:#ff9d9d;font-size:.8rem;font-weight:600;letter-spacing:.4px;
+         text-transform:uppercase;padding:6px 14px;border-radius:999px;margin-bottom:20px}
+  h1{font-family:'Fredoka',sans-serif;font-weight:700;
+     font-size:clamp(2rem,5vw,2.8rem);line-height:1.12;color:#fff;margin-bottom:14px}
+  .lede{color:var(--muted);font-size:1.08rem;max-width:60ch;margin-bottom:8px}
+
+  h2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.4rem;color:#fff;
+     margin:44px 0 6px;display:flex;align-items:center;gap:10px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;
+          width:32px;height:32px;border-radius:9px;font-size:1rem;
+          background:linear-gradient(180deg,var(--gold),#e0a92f);color:#1a1206;flex-shrink:0}
+  h3{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.08rem;color:#fff;margin-bottom:6px}
+  .sub{color:var(--muted);font-size:.95rem;margin-bottom:16px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+        padding:24px 26px;margin-top:14px}
+  .card.recommended{border-color:rgba(62,207,106,.30);
+                    background:linear-gradient(180deg,rgba(62,207,106,.06),rgba(255,255,255,.03))}
+  .tag-rec{display:inline-block;background:rgba(62,207,106,.14);
+           border:1px solid rgba(62,207,106,.34);color:#8ef0b0;
+           font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;
+           padding:3px 10px;border-radius:999px;margin-bottom:12px}
+
+  ol.steps{list-style:none;counter-reset:step;margin:6px 0 0}
+  ol.steps li{counter-increment:step;position:relative;padding:10px 0 10px 44px;
+              border-top:1px solid var(--line)}
+  ol.steps li:first-child{border-top:none}
+  ol.steps li::before{content:counter(step);position:absolute;left:0;top:11px;
+              width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);
+              border:1px solid var(--line);color:var(--gold-bright);
+              font-family:'Fredoka',sans-serif;font-weight:600;font-size:.9rem;
+              display:flex;align-items:center;justify-content:center}
+  ol.steps b{color:#fff;font-weight:600}
+
+  ul.plain{list-style:none;margin:6px 0 0}
+  ul.plain li{position:relative;padding:6px 0 6px 24px;color:var(--ink)}
+  ul.plain li::before{content:"";position:absolute;left:4px;top:15px;
+              width:6px;height:6px;border-radius:50%;background:var(--gold)}
+
+  .btn-email{display:inline-flex;align-items:center;gap:9px;margin-top:16px;
+             background:linear-gradient(180deg,var(--gold),#e0a92f);color:#1a1206;
+             font-family:'Fredoka',sans-serif;font-weight:600;font-size:.98rem;
+             padding:12px 22px;border-radius:12px}
+  .btn-email:hover{transform:translateY(-2px);text-decoration:none;
+             box-shadow:0 8px 24px rgba(245,200,75,.22);transition:.2s}
+
+  .note{display:flex;gap:12px;align-items:flex-start;
+        background:rgba(255,77,77,.07);border:1px solid rgba(255,77,77,.26);
+        border-radius:14px;padding:16px 18px;margin-top:28px}
+  .note svg{flex-shrink:0;margin-top:2px}
+  .note p{font-size:.95rem;color:#ffc9c9}
+  .note b{color:#fff}
+
+  code{background:rgba(255,255,255,.08);border:1px solid var(--line);
+       border-radius:6px;padding:2px 7px;font-size:.9em;color:var(--gold-bright);
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  .help{margin-top:36px;color:var(--muted);font-size:.95rem}
+
+  footer{border-top:1px solid var(--line);padding:26px 0;margin-top:8px}
+  footer .links{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:12px}
+  footer .links a{color:var(--muted);font-size:.9rem}
+  footer .links a:hover{color:var(--gold-bright);text-decoration:none}
+  footer .copy{color:var(--muted);font-size:.85rem;opacity:.8}
+
+  @media (max-width:520px){
+    main{padding:32px 0 48px}
+    .card{padding:20px 18px}
+    h2{font-size:1.25rem}
+  }
+</style>
+<meta name="google-adsense-account" content="ca-pub-6906001828646372">
+</head>
+<body>
+<div class="cosmos" aria-hidden="true"></div>
+
+<nav>
+  <div class="nav-in">
+    <a class="brand" href="/" aria-label="37 — The Math Puzzle home">
+      <span class="n">37</span><span class="rest">The Math Puzzle</span>
+    </a>
+    <a class="home" href="/">← Back to home</a>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap prose">
+<nav class="top"><a href="/">&larr; Back to 37, The Math Puzzle</a></nav>
+    <h1>Terms and Conditions</h1>
+    <p class="meta">Last Updated: July 26, 2026</p>
+
+    <p>These Terms and Conditions (&ldquo;Terms&rdquo;) govern your access to and use
+      of 37 - The Math Puzzle, available as a mobile app and as a website at
+      37themathpuzzle.app and www.37themathpuzzle.com (the &ldquo;App&rdquo;), operated by HiiPointe Games LLC
+      (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;).</p>
+    <p>By downloading, installing, or using the App and these websites, you agree to be bound by these
+      Terms. If you do not agree, you must not use the App and these websites.</p>
+
+    <h2>1. Eligibility</h2>
+    <p>You must meet the minimum age required in your jurisdiction to use the App and these websites. If
+      you are under the age of majority, you may only use the App and these websites with the consent
+      and supervision of a parent or legal guardian.</p>
+
+    <h2>2. License to Use the App and these websites</h2>
+    <p>Subject to your compliance with these Terms, we grant you a limited,
+      non-exclusive, non-transferable, revocable license to download and use the App and these websites
+      solely for personal, non-commercial entertainment.</p>
+    <p>We may suspend or terminate this license at any time if you violate these
+      Terms.</p>
+
+    <h2>3. Accounts / Usernames / Data Collection</h2>
+    <h3>Username (Required)</h3>
+    <p>A username (display name) is required to play. Usernames are pseudonymous
+      gameplay identifiers and are not intended to identify you personally. You agree
+      not to include personal or inappropriate content in your username. Usernames
+      may be changed at any time within the App and these websites.</p>
+    <h3>Optional Account Linking</h3>
+    <p>You may optionally create an account using an email address and password to
+      save and transfer progress across devices. Providing an email address
+      constitutes personal information, which is collected and used solely to enable
+      account features as described in our Privacy Policy. Providing this information
+      is voluntary. Without account linking, gameplay progress may be lost if the App and these websites
+      is deleted, you log out, or you change devices.</p>
+    <p>You are responsible for maintaining the confidentiality of your login
+      credentials. We may remove or suspend accounts that violate these Terms.</p>
+
+    <h2>4. Privacy</h2>
+    <p>Your use of the App and these websites is also governed by our
+      <a href="/privacy.html">Privacy Policy</a>, which explains how information is
+      collected, used, and protected. By using the App and these websites, you agree to the practices
+      described in the Privacy Policy.</p>
+
+    <h2>5. Free Access and Advertising</h2>
+    <p>The App is free to download and play. We do not require payment information and
+      do not offer purchases or subscriptions.</p>
+    <p>The App is supported by third-party advertising (including Google AdSense on
+      the web version). By using the App and these websites, you acknowledge that advertisements may be
+      displayed. We are not responsible for the content or practices of third-party
+      advertisers.</p>
+
+    <h2>6. Acceptable Use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>use the App and these websites for unlawful or harmful purposes</li>
+      <li>attempt to interfere with or disrupt the App and these websites or servers</li>
+      <li>attempt to gain unauthorized access to systems or accounts</li>
+      <li>reverse engineer, copy, modify, or distribute the App and these websites</li>
+      <li>exploit bugs or manipulate gameplay unfairly</li>
+    </ul>
+    <p>We may restrict or terminate access for violations.</p>
+
+    <h2>7. Intellectual Property</h2>
+    <p>All content, software, designs, graphics, trademarks, and materials within the
+      App are owned by HiiPointe Games LLC or its licensors and are protected by
+      intellectual property laws. You may not reproduce or distribute any part of the
+      App without permission.</p>
+
+    <h2>8. Service Availability</h2>
+    <p>We may update, modify, suspend, or discontinue any part of the App and these websites at any time
+      without notice. We are not responsible for loss of gameplay data or
+      interruptions of service.</p>
+
+    <h2>9. Disclaimers</h2>
+    <p>THE APP IS PROVIDED &ldquo;AS IS&rdquo; AND &ldquo;AS AVAILABLE,&rdquo; WITHOUT
+      WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF
+      MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. YOUR USE
+      OF THE APP IS AT YOUR OWN RISK.</p>
+
+    <h2>10. Limitation of Liability</h2>
+    <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, HiiPointe Games LLC AND ITS AFFILIATES
+      SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR
+      PUNITIVE DAMAGES, OR FOR LOSS OF DATA, PROGRESS, OR PROFITS, ARISING FROM YOUR
+      USE OF THE APP.</p>
+
+    <h2>11. Indemnification</h2>
+    <p>You agree to indemnify and hold harmless HiiPointe Games LLC from any claims,
+      damages, or expenses arising out of your use of the App and these websites or violation of these
+      Terms.</p>
+
+    <h2>12. Termination</h2>
+    <p>We may suspend or terminate your access to the App and these websites at any time for violations
+      of these Terms or misuse of the service.</p>
+    <p>You may stop using the App and these websites at any time and may request deletion of any linked
+      account in accordance with our Privacy Policy.</p>
+
+    <h2>13. Changes to These Terms</h2>
+    <p>We may update these Terms from time to time. Continued use of the App and these websites after
+      updates constitutes acceptance of the revised Terms.</p>
+
+    <h2>14. Governing Law</h2>
+    <p>These Terms are governed by the laws of the United States and the State of
+      Missouri, without regard to conflict of law principles. Any disputes shall be
+      resolved in the courts located in Kansas City, Missouri.</p>
+
+    <h2>Promotions and Prize Draws</h2>
+      <p>From time to time we run promotions, including a free weekly prize draw.
+        Participation is subject to the official rules published at
+        <a href="https://www.37themathpuzzle.com/#prize">37themathpuzzle.com</a>,
+        which form part of these Terms. Where the official rules and these Terms
+        conflict, the official rules govern the promotion.</p>
+      <p>Entry is free. No purchase is necessary, and no purchase improves your
+        chance of winning. Entrants must be 18 or older and resident in the United
+        States, and must hold a saved account with an email address attached so
+        that we can contact them. Prizes are paid by Venmo or Zelle only, and an
+        unclaimed prize is forfeited after the period stated in the official rules.</p>
+      <p>We may publish a winner's username, the mode they won in and their solve
+        time. We may cancel, suspend or amend a promotion where it cannot be run as
+        planned, and we may disqualify any entry obtained through cheating,
+        automation, or the use of more than one account by the same person.</p>
+      <p>This promotion is sponsored solely by HiiPointe Games LLC. It is not
+        sponsored, endorsed or administered by, or associated with, Apple Inc. or
+        Google LLC.</p>
+      <h2>15. Contact</h2>
+    <p>HiiPointe Games LLC<br />
+      Email: <a href="mailto:contactus@hiipointegames.com">contactus@hiipointegames.com</a></p>
+
+    <h2>Acceptance</h2>
+    <p>By using 37 - The Math Puzzle, you acknowledge that you have read and agree to
+      these Terms and Conditions.</p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="/">Home</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms &amp; Conditions</a>
+      <a href="mailto:contactus@hiipointegames.com">Contact Us</a>
+    </div>
+    <p class="copy">© 2026 HiiPointe Games LLC · Smart games for smart people.</p>
+  </div>
+</footer>
+</body>
+</html>
