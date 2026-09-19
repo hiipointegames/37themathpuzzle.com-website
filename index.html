@@ -1319,6 +1319,10 @@
   .hero-tag{font-size:.95rem;color:var(--gold);font-style:italic;margin-bottom:28px}
   .hero-freebie{margin-top:14px;font-size:.95rem;font-weight:500;color:var(--gold-bright);text-align:center}
   .hero-cta{display:inline-block}
+  /* download-first hero: title full width, splash + store buttons above the fold */
+  .hero-head{margin-bottom:26px}
+  .hero-blurb{margin-top:38px}
+  .hero-blurb .hero-sub{max-width:900px;margin:0 auto;text-align:center}
   .store-row{display:flex;gap:14px;flex-wrap:wrap}
   .store-btn{
     display:flex;align-items:center;gap:11px;
@@ -1504,7 +1508,11 @@
   @media(max-width:860px){
     .nav-links{display:none}
     .burger{display:block}
-    .hero-grid{grid-template-columns:1fr;gap:36px}
+    .hero-grid{grid-template-columns:1fr;gap:26px}
+    .phone-stage{order:-1}
+    .phone{width:260px}
+    .hero-head{margin-bottom:18px}
+    .hero-blurb{margin-top:28px}
     .hero-sub{margin-left:auto;margin-right:auto}
     .hero{text-align:center;padding:46px 0 60px}
     .badge-pill{margin-left:auto;margin-right:auto}
@@ -1521,7 +1529,8 @@
     .wrap{padding:0 18px}
     section{padding:46px 0}
     .hero{padding:32px 0 44px}
-    .hero-grid{gap:28px}
+    .hero-grid{gap:22px}
+    .phone{width:230px}
     .hero-sub{margin-top:14px;margin-bottom:22px}
     .final{padding:40px 22px}
     .aud{gap:24px}
@@ -2074,7 +2083,6 @@
     <span class="prize-flash">🏆</span>
     <span class="prize-main">Win <strong>$37</strong> every week</span>
     <span class="prize-sub">Finish any Daily Challenge - Easy, Challenge or Expert - to enter Sunday’s draw. Up to 3 entries a day, 21 a week. Free to play.</span>
-    <span class="prize-cta prize-cta-text">Download below.</span>
   </div>
 </aside>
 
@@ -2106,10 +2114,11 @@
 
 <!-- HERO -->
 <header class="hero" id="top">
+  <div class="wrap hero-head">
+    <h1 class="hero-title"><span class="hero-37">37</span><span class="hero-name"> - The Math Puzzle</span></h1>
+  </div>
   <div class="wrap hero-grid">
     <div>
-      <h1 class="hero-title"><span class="hero-37">37</span><span class="hero-name"> - The Math Puzzle</span></h1>
-      <p class="hero-sub"><strong>Seven dice. One target. A brand-new puzzle every single day!</strong> 37 - The Math Puzzle is a free math game for iOS, Android and your browser. Think of it as the Wordle of math! It is built for three kinds of people: students who want math to stop feeling like homework, grown-ups who miss being quick with numbers, and competitive types who just want their name at the top of the podium. Solve all 3 Daily Challenges - build your daily streak and go head-to-head with your friends in the Blitz Colosseum! Quick to learn - seriously fun. Welcome to Edu-Tainment, where education and entertainment collide!</p>
       <div class="hero-cta">
       <p class="rating-pill"><span class="stars5">★★★★★</span> <strong>5.0</strong> from 23 ratings on the App Store</p>
         <div class="store-row">
@@ -2131,6 +2140,9 @@
         <div class="phone-screen"><picture><source srcset="/app-icon.webp" type="image/webp"><img src="/app-icon.jpg" width="600" height="596" fetchpriority="high" decoding="async" alt="37 - The Math Puzzle app icon"></picture></div>
       </div>
     </div>
+  </div>
+  <div class="wrap hero-blurb">
+    <p class="hero-sub"><strong>Seven dice. One target. A brand-new puzzle every single day!</strong> 37 - The Math Puzzle is a free math game for iOS, Android and your browser. Think of it as the Wordle of math! It is built for three kinds of people: students who want math to stop feeling like homework, grown-ups who miss being quick with numbers, and competitive types who just want their name at the top of the podium. Solve all 3 Daily Challenges - build your daily streak and go head-to-head with your friends in the Blitz Colosseum! Quick to learn - seriously fun. Welcome to Edu-Tainment, where education and entertainment collide!</p>
   </div>
 </header>
 
