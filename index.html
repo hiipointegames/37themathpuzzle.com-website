@@ -2080,6 +2080,41 @@
     @media(prefers-reduced-motion:reduce){
       .ctab[data-goto="prize"]{animation:none !important}
     }
+
+  /* "Keep reading" — the cross-link to the guides on .app. It carries real SEO
+     weight (it is how crawlers reach the guide set from this domain), so it
+     should look like an invitation rather than a disclaimer. The WHOLE card is
+     the link: a 16px target beats a few underlined words, especially on a
+     phone, and it is the last thing on the page before the footer. */
+  .keep-reading{display:flex;align-items:center;gap:16px;margin:34px 0 0;padding:18px 20px;
+    border-radius:16px;text-decoration:none;
+    background:linear-gradient(120deg,rgba(245,200,75,.10),rgba(166,77,255,.12));
+    border:1px solid rgba(245,200,75,.28);
+    box-shadow:0 8px 26px rgba(0,0,0,.28);
+    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+  .keep-reading:hover,.keep-reading:focus-visible{transform:translateY(-2px);
+    border-color:rgba(245,200,75,.55);box-shadow:0 14px 34px rgba(245,200,75,.16)}
+  .keep-reading:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
+  .keep-reading .kr-icon{flex:0 0 auto;font-size:1.5rem;line-height:1;
+    filter:drop-shadow(0 0 10px rgba(245,200,75,.45))}
+  .keep-reading .kr-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .keep-reading .kr-kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--gold);font-weight:700}
+  .keep-reading .kr-title{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.05rem;
+    color:var(--gold-bright);line-height:1.25}
+  .keep-reading .kr-sub{font-size:.88rem;color:var(--muted);line-height:1.45}
+  .keep-reading .kr-arrow{margin-left:auto;flex:0 0 auto;color:var(--gold);font-size:1.2rem;
+    transition:transform .18s ease}
+  .keep-reading:hover .kr-arrow{transform:translateX(4px)}
+  @media (max-width:560px){
+    .keep-reading{gap:12px;padding:16px}
+    .keep-reading .kr-arrow{display:none}
+    .keep-reading .kr-title{font-size:.98rem}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .keep-reading,.keep-reading .kr-arrow{transition:none}
+    .keep-reading:hover{transform:none}
+  }
 </style>
 </head>
 <body>
@@ -2841,12 +2876,20 @@
     <p class="bottom-note">Free to download. Free to play. No subscription.</p>
   </div>
 </section>
-  <p class="keep-reading" style="margin:30px 0 0;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09)"><strong>Keep reading:</strong> <a href="https://37themathpuzzle.app/guides.html">Guides & Strategy for 37</a> &mdash; Strategy, worked boards and the maths behind the target, on 37themathpuzzle.app.</p>
+  <a class="keep-reading" href="https://37themathpuzzle.app/guides.html" rel="noopener">
+    <span class="kr-icon" aria-hidden="true">📘</span>
+    <span class="kr-text">
+      <span class="kr-kicker">Keep reading</span>
+      <span class="kr-title">Guides &amp; Strategy for 37</span>
+      <span class="kr-sub">Strategy, worked boards and the maths behind the target &mdash; on 37themathpuzzle.app</span>
+    </span>
+    <span class="kr-arrow" aria-hidden="true">&rarr;</span>
+  </a>
       </main>
 
 <!-- FOOTER -->
 <footer>
-    <p class="updated">Last updated <time datetime="2026-08-22">22 August 2026</time></p>
+    <p class="updated">Last updated <time datetime="2026-09-20">20 September 2026</time></p>
   <div class="wrap">
     <div class="footer-links">
       <a href="mailto:contactus@hiipointegames.com">Contact Us</a>
