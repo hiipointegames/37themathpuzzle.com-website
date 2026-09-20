@@ -2086,7 +2086,13 @@
      should look like an invitation rather than a disclaimer. The WHOLE card is
      the link: a 16px target beats a few underlined words, especially on a
      phone, and it is the last thing on the page before the footer. */
-  .keep-reading{display:flex;align-items:center;gap:16px;margin:34px 0 0;padding:18px 20px;
+  /* It sits outside the page's .wrap containers, so it has to carry the column
+     itself — 1180px to match .wrap, centred, with the same 24px gutter. Without
+     this it stretches the full viewport and the text hugs the left edge on a
+     desktop monitor, which is how it looked before this change too: the old
+     grey bar had the same bug, just no background to make it obvious. */
+  .keep-reading{display:flex;align-items:center;gap:16px;
+    max-width:1180px;margin:34px auto 0;padding:18px 24px;
     border-radius:16px;text-decoration:none;
     background:linear-gradient(120deg,rgba(245,200,75,.10),rgba(166,77,255,.12));
     border:1px solid rgba(245,200,75,.28);
