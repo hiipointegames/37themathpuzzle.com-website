@@ -161,7 +161,7 @@
 
   /* ---- cosmic background ---- */
   .cosmos{
-    position:fixed;inset:0;z-index:-3;
+    position:fixed;inset:0;z-index:-3;pointer-events:none;
     background:
       radial-gradient(ellipse 55% 45% at 72% 10%, rgba(166,77,255,.30), transparent 68%),
       radial-gradient(ellipse 50% 42% at 18% 28%, rgba(77,125,255,.24), transparent 70%),
@@ -193,7 +193,7 @@
   @keyframes swirl{to{transform:translate(-50%,-50%) rotate(360deg)}}
 
   /* starfield (multi-layer) */
-  .stars{position:fixed;inset:0;z-index:-2;}
+  .stars{position:fixed;inset:0;z-index:-2;pointer-events:none;}
   .star{position:absolute;border-radius:50%;background:#fff;animation:tw var(--tw,4s) ease-in-out infinite}
   @keyframes tw{0%,100%{opacity:.12}50%{opacity:1}}
   .stars-far .star{width:1px;height:1px}
@@ -287,10 +287,15 @@
 
   /* phone mockup */
   .phone-stage{position:relative;display:flex;justify-content:center}
+  /* Decorative only -- MUST keep pointer-events:none. This 380px blurred
+     circle overlaps the hero download buttons, and without it the glow
+     swallows the taps: it ate the left 56% of the App Store button after
+     the phone was moved above the buttons (1493c5e, 2026-09-19). */
   .phone-glow{
     position:absolute;width:380px;height:380px;border-radius:50%;
     background:var(--rainbow);filter:blur(75px);opacity:.45;
     animation:spin 18s linear infinite;
+    pointer-events:none;
   }
   @keyframes spin{to{transform:rotate(360deg)}}
   .phone{
