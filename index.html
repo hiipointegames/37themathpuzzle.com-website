@@ -1313,8 +1313,10 @@
     }
     .store-btn svg{width:30px !important;height:30px !important;position:relative;z-index:1}
     .store-btn span{position:relative;z-index:1}
-    /* stack "Download on the" above "App Store" like the official badges */
-    .store-btn > span{display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:left}
+    /* "Download on the  App Store" on one line, with breathing room between;
+       only a button too narrow to hold it (tiny phones) wraps to two lines */
+    .store-btn > span{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:9px;row-gap:4px}
+    .store-btn > span > span{white-space:nowrap}
     .store-btn .sm{font-size:.72rem !important;line-height:1}
     .store-btn .lg{font-size:1.26rem !important}
     @media(prefers-reduced-motion:reduce){ .store-btn::after{animation:none;opacity:0} }
@@ -1322,6 +1324,14 @@
       .store-btn{padding:15px 22px !important;border-radius:14px !important}
       .store-btn svg{width:27px !important;height:27px !important}
       .store-btn .lg{font-size:1.14rem !important}
+    }
+    /* the "Today's puzzle is waiting" card is narrower than the page */
+    @media(max-width:480px){ .final .store-btn{padding-left:16px !important;padding-right:16px !important} }
+    @media(max-width:380px){
+      .store-btn{padding:13px 16px !important;gap:10px !important}
+      .store-btn svg{width:24px !important;height:24px !important}
+      .store-btn .sm{font-size:.64rem !important}
+      .store-btn .lg{font-size:1.04rem !important}
     }
 
     /* --- $37 Prize Rules tab: money green, animated --- */
