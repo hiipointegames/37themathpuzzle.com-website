@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Play 37 - The Math Puzzle</title>
+<meta name="description" content="Today's puzzle is waiting. Open 37 or get it free.">
+<!-- Share-link landing page (players' "your turn" links). Not content:
+     keep it out of search, the sitemap and the site navigation. -->
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#050310">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="37 - The Math Puzzle">
+<meta property="og:title" content="Play 37 - The Math Puzzle">
+<meta property="og:description" content="Today's puzzle is waiting. Open 37 or get it free.">
+<meta property="og:url" content="https://www.37themathpuzzle.com/play/">
+<!-- Deliberately the generic site card, NOT a dice card: the shared message
+     already carries the dice picture and we don't want it shown twice. -->
+<meta property="og:image" content="https://www.37themathpuzzle.com/og-card.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Play 37 - The Math Puzzle">
+<meta name="twitter:description" content="Today's puzzle is waiting. Open 37 or get it free.">
+<meta name="twitter:image" content="https://www.37themathpuzzle.com/og-card.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050310;
+    --magenta:#ff2bd0;
+    --cyan:#1ff0ff;
+    --violet:#b13bff;
+    --gold:#ffcf3a;
+    --ink:#eeeaff;
+    --muted:#a9a3cc;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{min-height:100%}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:'Outfit',sans-serif;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none}
+
+  /* ---- space background (same layered approach as the rest of the site;
+     every layer is decorative and MUST keep pointer-events:none so it can
+     never swallow a tap on the buttons) ---- */
+  .cosmos{
+    position:fixed;inset:0;z-index:-3;pointer-events:none;
+    background:
+      radial-gradient(ellipse 60% 45% at 78% 8%, rgba(177,59,255,.32), transparent 68%),
+      radial-gradient(ellipse 55% 42% at 12% 30%, rgba(31,240,255,.16), transparent 70%),
+      radial-gradient(ellipse 50% 40% at 85% 70%, rgba(255,43,208,.18), transparent 70%),
+      radial-gradient(ellipse 60% 45% at 40% 100%, rgba(255,207,58,.10), transparent 72%),
+      var(--bg);
+  }
+  .stars{position:fixed;inset:0;z-index:-2;pointer-events:none}
+  .star{position:absolute;border-radius:50%;background:#fff;animation:tw var(--tw,4s) ease-in-out infinite}
+  @keyframes tw{0%,100%{opacity:.12}50%{opacity:1}}
+  .stars-far .star{width:1px;height:1px}
+  .stars-mid .star{width:2px;height:2px}
+  .stars-near .star{width:3px;height:3px;box-shadow:0 0 6px rgba(255,255,255,.8)}
+  @media (prefers-reduced-motion:reduce){ .star{animation:none;opacity:.6} }
+
+  /* ---- layout ---- */
+  main{
+    min-height:100vh;min-height:100svh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  .card{width:100%;max-width:440px;text-align:center}
+  .logo{
+    width:72px;height:72px;border-radius:18px;display:block;margin:0 auto 18px;
+    box-shadow:0 0 0 2px rgba(31,240,255,.35),0 0 28px rgba(177,59,255,.55);
+  }
+  h1{
+    font-family:'Fredoka',sans-serif;font-weight:600;
+    font-size:clamp(1.45rem,6.4vw,1.95rem);line-height:1.22;
+    margin:0 0 22px;text-wrap:balance;
+  }
+  h1 .who{color:var(--cyan);text-shadow:0 0 14px rgba(31,240,255,.45)}
+  h1 .turn{display:block;color:var(--gold);text-shadow:0 0 16px rgba(255,207,58,.35);margin-top:4px}
+
+  .actions{display:flex;flex-direction:column;gap:12px;align-items:stretch}
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    min-height:56px;padding:14px 20px;border-radius:16px;
+    font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.2rem;
+    transition:transform .15s ease, box-shadow .15s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn-primary{
+    color:#fff;
+    background:linear-gradient(135deg,var(--magenta),var(--violet));
+    box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 8px 28px rgba(255,43,208,.45);
+  }
+  .btn-primary:hover{box-shadow:0 0 0 1px rgba(255,255,255,.28) inset,0 10px 34px rgba(255,43,208,.6)}
+  .btn-store{
+    min-height:52px;font-family:'Outfit',sans-serif;font-size:1.02rem;font-weight:600;color:#fff;
+    background:linear-gradient(160deg,#2b2b2f 0%,#0a0a0c 45%,#000 62%,#1c1c20 100%);
+    border:1px solid rgba(255,255,255,.3);
+  }
+  .btn-store svg{flex-shrink:0}
+  .caption,.note{font-size:.92rem;color:var(--muted);line-height:1.4}
+  .caption{margin-top:-4px}
+  .note{margin-top:2px}
+
+  /* desktop */
+  .desk-lead{font-family:'Fredoka',sans-serif;font-size:1.25rem;font-weight:600;color:var(--cyan);margin-bottom:14px}
+  .qr{
+    width:196px;height:196px;margin:0 auto 10px;padding:10px;border-radius:16px;background:#fff;
+    box-shadow:0 0 0 2px rgba(31,240,255,.4),0 0 30px rgba(177,59,255,.45);
+  }
+  .qr svg{display:block;width:100%;height:100%}
+  .qr-cap{font-size:.92rem;color:var(--muted);margin-bottom:18px}
+  .store-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .store-row .btn-store{flex:1 1 180px}
+
+  /* prize box (eligibility wording is legally load-bearing: do not edit) */
+  .prize{
+    margin-top:24px;padding:14px 16px;border-radius:16px;
+    background:rgba(255,207,58,.07);border:1px solid rgba(255,207,58,.35);
+  }
+  .prize-h{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.1rem;color:var(--gold)}
+  .prize-s{font-size:.86rem;color:var(--muted);margin-top:4px}
+  .prize-s a{color:var(--ink);text-decoration:underline;text-underline-offset:2px;padding:6px 2px}
+
+  .foot{margin-top:18px;font-size:.8rem;color:var(--muted)}
+  .foot a{padding:8px 6px;display:inline-block}
+  .foot a:hover{color:var(--ink)}
+
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="cosmos"></div>
+<div class="stars stars-far" id="stars-far"></div>
+<div class="stars stars-mid" id="stars-mid"></div>
+<div class="stars stars-near" id="stars-near"></div>
+
+<main>
+  <div class="card">
+    <img class="logo" src="/app-icon.webp" width="72" height="72" alt="37 - The Math Puzzle">
+    <h1 id="headline">Today's 37 is waiting. <span class="turn">Your turn?</span></h1>
+
+    <!-- iPhone / iPad -->
+    <div class="actions" id="ios" hidden>
+      <!-- Bare scheme, NO path/query: the app ignores unknown links and just
+           opens, exactly like tapping its icon. That is intended. -->
+      <a class="btn btn-primary" id="ios-open" href="thirtysevenapp://" data-event="open_app">Open in 37</a>
+      <!-- target=_blank is REQUIRED: in-app browsers (QR scanners, messengers)
+           silently drop App Store links otherwise. -->
+      <a class="btn btn-store" id="ios-store" href="https://apps.apple.com/app/id6762534650?ct=play" target="_blank" rel="noopener" data-event="app_store">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M17.05 12.04c-.03-3.02 2.47-4.47 2.58-4.54-1.41-2.06-3.6-2.34-4.38-2.37-1.86-.19-3.64 1.1-4.58 1.1-.95 0-2.4-1.08-3.95-1.05-2.03.03-3.9 1.18-4.94 3-2.11 3.66-.54 9.08 1.5 12.05 1 1.46 2.19 3.09 3.74 3.03 1.5-.06 2.07-.97 3.88-.97 1.8 0 2.32.97 3.9.94 1.61-.03 2.63-1.47 3.62-2.94 1.14-1.69 1.61-3.33 1.64-3.41-.04-.02-3.15-1.21-3.18-4.8zM14.13 3.36c.82-1 1.38-2.39 1.23-3.78-1.19.05-2.63.79-3.48 1.79-.76.88-1.43 2.29-1.25 3.64 1.33.1 2.68-.67 3.5-1.65z"/></svg>
+        Download on the App Store
+      </a>
+      <p class="note">Don't have it yet? Get it free on the App Store.</p>
+    </div>
+
+    <!-- Android -->
+    <div class="actions" id="android" hidden>
+      <a class="btn btn-primary" id="and-open" href="https://play.google.com/store/apps/details?id=com.hiipointegames.themathpuzzle37" data-event="open_app">Play 37</a>
+      <p class="caption">Opens the app if you have it, the Play Store if you don't</p>
+      <!-- Safety net for browsers that ignore intent:// URLs. -->
+      <a class="btn btn-store" id="and-store" href="https://play.google.com/store/apps/details?id=com.hiipointegames.themathpuzzle37" target="_blank" rel="noopener" data-event="play_store">
+        <svg width="20" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="#00d9ff" d="M3.6 2.3C3.3 2.6 3.1 3 3.1 3.6v16.8c0 .6.2 1 .5 1.3l.1.1L13 12.6v-.2L3.7 2.2z"/><path fill="#ffd400" d="M16.3 15.7L13 12.5v-.2l3.3-3.3.1.1 3.9 2.2c1.1.6 1.1 1.6 0 2.3l-3.9 2.1z"/><path fill="#ff3333" d="M16.4 15.6L13 12.4 3.6 21.7c.4.4 1 .4 1.7.1l11.1-6.2"/><path fill="#00f076" d="M16.4 9.1L5.3 2.9c-.7-.4-1.3-.3-1.7.1L13 12.4z"/></svg>
+        Get it on Google Play
+      </a>
+    </div>
+
+    <!-- Desktop: no open button, the game is phone-only -->
+    <div id="desktop" hidden>
+      <p class="desk-lead">37 is a phone game.</p>
+      <div class="qr" id="qr" role="img" aria-label="QR code that opens this page on your phone"></div>
+      <p class="qr-cap">Scan with your phone's camera</p>
+      <div class="store-row">
+        <a class="btn btn-store" id="desk-ios" href="https://apps.apple.com/app/id6762534650?ct=play" target="_blank" rel="noopener" data-event="app_store">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M17.05 12.04c-.03-3.02 2.47-4.47 2.58-4.54-1.41-2.06-3.6-2.34-4.38-2.37-1.86-.19-3.64 1.1-4.58 1.1-.95 0-2.4-1.08-3.95-1.05-2.03.03-3.9 1.18-4.94 3-2.11 3.66-.54 9.08 1.5 12.05 1 1.46 2.19 3.09 3.74 3.03 1.5-.06 2.07-.97 3.88-.97 1.8 0 2.32.97 3.9.94 1.61-.03 2.63-1.47 3.62-2.94 1.14-1.69 1.61-3.33 1.64-3.41-.04-.02-3.15-1.21-3.18-4.8zM14.13 3.36c.82-1 1.38-2.39 1.23-3.78-1.19.05-2.63.79-3.48 1.79-.76.88-1.43 2.29-1.25 3.64 1.33.1 2.68-.67 3.5-1.65z"/></svg>
+          App Store
+        </a>
+        <a class="btn btn-store" id="desk-play" href="https://play.google.com/store/apps/details?id=com.hiipointegames.themathpuzzle37" target="_blank" rel="noopener" data-event="play_store">
+          <svg width="20" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="#00d9ff" d="M3.6 2.3C3.3 2.6 3.1 3 3.1 3.6v16.8c0 .6.2 1 .5 1.3l.1.1L13 12.6v-.2L3.7 2.2z"/><path fill="#ffd400" d="M16.3 15.7L13 12.5v-.2l3.3-3.3.1.1 3.9 2.2c1.1.6 1.1 1.6 0 2.3l-3.9 2.1z"/><path fill="#ff3333" d="M16.4 15.6L13 12.4 3.6 21.7c.4.4 1 .4 1.7.1l11.1-6.2"/><path fill="#00f076" d="M16.4 9.1L5.3 2.9c-.7-.4-1.3-.3-1.7.1L13 12.4z"/></svg>
+          Google Play
+        </a>
+      </div>
+    </div>
+
+    <noscript>
+      <div class="actions">
+        <a class="btn btn-store" href="https://apps.apple.com/app/id6762534650?ct=play" target="_blank" rel="noopener">Download on the App Store</a>
+        <a class="btn btn-store" href="https://play.google.com/store/apps/details?id=com.hiipointegames.themathpuzzle37" target="_blank" rel="noopener">Get it on Google Play</a>
+      </div>
+    </noscript>
+
+    <!-- Eligibility wording is legally load-bearing: copy EXACTLY, never paraphrase. -->
+    <div class="prize">
+      <p class="prize-h">🏆 $37 prize every week</p>
+      <p class="prize-s">18+, US only, account with email · <a href="https://www.37themathpuzzle.com/#prize">Official rules</a></p>
+    </div>
+
+    <p class="foot"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
+  </div>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  // ---- backend (public, read-only RPCs; the publishable key is meant to be public) ----
+  var SUPABASE_URL = 'https://xpruolmmhssfrgqkcfqx.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_inh_7hk5qODnKu-fLBGVmw_N4codqp9';
+
+  var APP_STORE = 'https://apps.apple.com/app/id6762534650';
+  var PACKAGE = 'com.hiipointegames.themathpuzzle37';
+  var MODE_NAMES = { daily: 'Challenge Daily', daily_easy: 'Easy Daily', daily_expert: 'Expert Daily' };
+
+  // ---- starfield ----
+  function makeStars(id, count, twMin, twMax){
+    var c = document.getElementById(id), frag = document.createDocumentFragment();
+    for (var i = 0; i < count; i++){
+      var s = document.createElement('div'); s.className = 'star';
+      s.style.left = Math.random()*100 + '%';
+      s.style.top = Math.random()*100 + '%';
+      s.style.setProperty('--tw', (twMin + Math.random()*(twMax-twMin)).toFixed(1) + 's');
+      s.style.animationDelay = (Math.random()*5).toFixed(1) + 's';
+      frag.appendChild(s);
+    }
+    c.appendChild(frag);
+  }
+  makeStars('stars-far', 70, 4, 7);
+  makeStars('stars-mid', 40, 3, 5);
+  makeStars('stars-near', 16, 2.5, 4);
+
+  // ---- share code: /play/<code>  (?code= is a fallback, handy for local testing) ----
+  var CODE_RE = /^[a-z0-9]{6,12}$/;
+  function readCode(){
+    var m = location.pathname.match(/^\/play\/([^\/]+)\/?$/);
+    var c = m ? m[1] : '';
+    if (!c || c === 'index.html') c = new URLSearchParams(location.search).get('code') || '';
+    c = c.toLowerCase();
+    return CODE_RE.test(c) ? c : null;
+  }
+  var code = readCode();
+
+  // ---- device (iPadOS reports as a Mac; a touch "Mac" is an iPad) ----
+  var ua = navigator.userAgent || '';
+  var platform = (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) ? 'ios'
+               : /Android/i.test(ua) ? 'android' : 'desktop';
+
+  // ---- fire-and-forget logging: never blocks navigation ----
+  function logEvent(ev){
+    try {
+      fetch(SUPABASE_URL + '/rest/v1/rpc/log_share_event', {
+        method: 'POST', keepalive: true,
+        headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_code: code, p_event: ev, p_platform: platform })
+      }).catch(function(){});
+    } catch (e) {}
+  }
+
+  // ---- store / open links (campaign = closing_line, or 'play') ----
+  function playUrl(campaign){
+    return 'https://play.google.com/store/apps/details?id=' + PACKAGE + '&referrer=' +
+      encodeURIComponent('utm_source=share&utm_medium=play_page&utm_campaign=' + campaign);
+  }
+  function setLinks(campaign){
+    var c = campaign || 'play';
+    var ios = APP_STORE + '?ct=' + encodeURIComponent(c);
+    var play = playUrl(c);
+    var intent = 'intent://#Intent;scheme=thirtysevenapp;package=' + PACKAGE +
+      ';S.browser_fallback_url=' + encodeURIComponent(play) + ';end';
+    document.getElementById('ios-store').href = ios;
+    document.getElementById('desk-ios').href = ios;
+    document.getElementById('and-open').href = intent;
+    document.getElementById('and-store').href = play;
+    document.getElementById('desk-play').href = play;
+  }
+  setLinks('play');
+
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('a[data-event]');
+    if (a) logEvent(a.getAttribute('data-event'));   // no preventDefault: navigate immediately
+  });
+
+  document.getElementById(platform).hidden = false;
+
+  // ---- desktop QR of this page, so the phone lands here with the same code ----
+  if (platform === 'desktop'){
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+    s.integrity = 'sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k';
+    s.crossOrigin = 'anonymous';
+    s.onload = function(){
+      try {
+        var qr = window.qrcode(0, 'M');
+        qr.addData(location.href.split('#')[0]);
+        qr.make();
+        document.getElementById('qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+      } catch (e) {}
+    };
+    s.onerror = function(){ document.getElementById('qr').hidden = true; };
+    document.head.appendChild(s);
+  }
+
+  // ---- headline (username via textContent only, never innerHTML) ----
+  function fmtTime(sec){
+    sec = Math.max(0, Math.round(Number(sec)));
+    var m = Math.floor(sec/60), r = sec % 60;
+    return m + ':' + (r < 10 ? '0' : '') + r;
+  }
+  function render(row){
+    var h = document.getElementById('headline');
+    var mode = MODE_NAMES[row.mode];
+    if (!mode) return;                          // unknown mode: keep the generic copy
+    var label = mode + (row.puzzle_number != null ? ' #' + row.puzzle_number : '');
+    var parts = [];                             // [text, className?]
+    if (row.username && row.result === 'forfeit'){
+      parts = [['37 beat '], ['@' + row.username, 'who'], [' on ' + label + '.']];
+    } else if (row.username && (row.result === 'solved' || row.result === 'perfect')){
+      var t = row.solve_seconds != null ? ' in ' + fmtTime(row.solve_seconds) : '';
+      parts = [['@' + row.username, 'who'], [" solved today's " + label + t + '.']];
+    } else {
+      parts = [["Today's " + label + ' is waiting.']];
+    }
+    parts.push([' Your turn?', 'turn']);
+    h.textContent = '';
+    parts.forEach(function(p){
+      if (p[1]){ var sp = document.createElement('span'); sp.className = p[1]; sp.textContent = p[0]; h.appendChild(sp); }
+      else h.appendChild(document.createTextNode(p[0]));
+    });
+  }
+
+  logEvent('visit');
+
+  if (code){
+    var ctrl = window.AbortController ? new AbortController() : null;
+    if (ctrl) setTimeout(function(){ ctrl.abort(); }, 5000);
+    fetch(SUPABASE_URL + '/rest/v1/rpc/get_share_link', {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_code: code }),
+      signal: ctrl ? ctrl.signal : undefined
+    }).then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(rows){
+        var row = Array.isArray(rows) ? rows[0] : null;
+        if (!row) return;
+        if (row.closing_line) setLinks(String(row.closing_line));
+        render(row);
+      })
+      .catch(function(){});                     // generic copy stays; page still works
+  }
+})();
+</script>
+</body>
+</html>

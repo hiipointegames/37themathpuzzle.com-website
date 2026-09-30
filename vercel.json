@@ -11,6 +11,14 @@
     {
       "source": "/terms",
       "destination": "/terms.html"
+    },
+    {
+      "source": "/play",
+      "destination": "/play/index.html"
+    },
+    {
+      "source": "/play/:code",
+      "destination": "/play/index.html"
     }
   ]
 }
