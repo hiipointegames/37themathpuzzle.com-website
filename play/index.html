@@ -14,8 +14,9 @@
 <meta property="og:title" content="Play 37 - The Math Puzzle">
 <meta property="og:description" content="Today's puzzle is waiting. Open 37 or get it free.">
 <meta property="og:url" content="https://www.37themathpuzzle.com/play/">
-<!-- Deliberately the generic site card, NOT a dice card: the shared message
-     already carries the dice picture and we don't want it shown twice. -->
+<!-- The generic card. For /play/<code>, api/play.js swaps in that player's own
+     card (2026-10-04: the share no longer attaches it as a photo), and keeps
+     this one when there is no card yet. Tests: api/_playMeta.test.js. -->
 <meta property="og:image" content="https://www.37themathpuzzle.com/og-card.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Play 37 - The Math Puzzle">

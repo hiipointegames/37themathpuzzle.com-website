@@ -18,7 +18,13 @@
     },
     {
       "source": "/play/:code",
-      "destination": "/play/index.html"
+      "destination": "/api/play?code=:code"
     }
-  ]
+  ],
+  "functions": {
+    "api/play.js": {
+      "includeFiles": "play/index.html",
+      "maxDuration": 5
+    }
+  }
 }
