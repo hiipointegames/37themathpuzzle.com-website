@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>This Week's Hat - 37 The Math Puzzle</title>
+<meta name="description" content="Who is in this week's $37 drawing, and with how many entries. Updated every night.">
+<!-- The weekly entrant list (usernames + entry counts). Kept out of search:
+     it names players, and a stale cached copy would mislead. -->
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#050310">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Same palette and faces as the rest of 37themathpuzzle.com. */
+  :root{
+    --bg:#050310;
+    --panel:rgba(20,14,46,.72);
+    --line:rgba(177,59,255,.28);
+    --magenta:#ff2bd0;
+    --cyan:#1ff0ff;
+    --violet:#b13bff;
+    --gold:#ffcf3a;
+    --ink:#eeeaff;
+    --muted:#a9a3cc;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--bg);color:var(--ink);font-family:'Outfit',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;min-height:100vh;
+  }
+  a{color:var(--cyan)}
+  .cosmos{
+    position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(ellipse 60% 45% at 78% 8%, rgba(177,59,255,.30), transparent 68%),
+      radial-gradient(ellipse 55% 42% at 12% 30%, rgba(31,240,255,.13), transparent 70%),
+      radial-gradient(ellipse 60% 45% at 40% 100%, rgba(255,207,58,.09), transparent 72%),
+      var(--bg);
+  }
+  main{max-width:720px;margin:0 auto;padding-inline:18px;padding-block:28px 64px;display:grid;gap:22px}
+
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font:700 1.05rem 'Fredoka',sans-serif;justify-self:start}
+  .brand b{color:var(--gold)}
+  header{display:grid;gap:8px}
+  .eyebrow{font:600 .78rem/1.2 'Outfit',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+  h1{font:700 clamp(2rem,7vw,3rem)/1.05 'Fredoka',sans-serif;letter-spacing:-.01em;text-wrap:balance}
+  .range{color:var(--muted);font-size:1.02rem}
+
+  .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:2px;min-width:0}
+  .stat b{font:700 clamp(1.4rem,5vw,1.9rem)/1.1 'Fredoka',sans-serif;font-variant-numeric:tabular-nums}
+  .stat span{color:var(--muted);font-size:.86rem}
+  .stat.gold b{color:var(--gold)}
+
+  .winner{
+    border:1px solid rgba(255,207,58,.55);border-radius:16px;padding:18px;text-align:center;
+    background:radial-gradient(ellipse at 50% 0%, rgba(255,207,58,.20), transparent 70%), var(--panel);
+    display:grid;gap:4px;
+  }
+  .winner .label{font:600 .78rem 'Outfit',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+  .winner .name{font:700 clamp(1.8rem,7vw,2.6rem)/1.1 'Fredoka',sans-serif;color:var(--gold);overflow-wrap:anywhere}
+  .winner .sub{color:var(--muted);font-size:.92rem}
+
+  .note{color:var(--muted);font-size:.92rem}
+  .note.warn{color:var(--gold)}
+
+  .find{
+    width:100%;font:inherit;font-size:1rem;color:var(--ink);background:rgba(5,3,16,.8);
+    border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  }
+  .find:focus{outline:2px solid var(--cyan);outline-offset:1px}
+
+  .list{list-style:none;display:grid;gap:6px}
+  .row{
+    display:grid;grid-template-columns:2.2rem minmax(0,1fr) auto;gap:4px 10px;align-items:center;
+    background:var(--panel);border:1px solid transparent;border-radius:12px;padding:10px 14px;
+  }
+  .row .rank{font:600 .9rem 'Fredoka',sans-serif;color:var(--muted);font-variant-numeric:tabular-nums}
+  .row .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .count{font:600 .95rem 'Fredoka',sans-serif;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .row .count small{font:500 .78rem 'Outfit',sans-serif;color:var(--muted);margin-left:6px}
+  .row .bar{grid-column:2 / 4;height:6px;border-radius:3px;background:rgba(177,59,255,.16);overflow:hidden}
+  .row .bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--violet),var(--magenta))}
+  .row.is-winner{border-color:rgba(255,207,58,.6)}
+  .row.is-winner .bar i{background:linear-gradient(90deg,var(--gold),#ffe58a)}
+  .empty{text-align:center;color:var(--muted);padding:26px 12px;background:var(--panel);border-radius:12px}
+
+  .how{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;display:grid;gap:10px}
+  .how h2{font:600 1.15rem 'Fredoka',sans-serif}
+  .how ul{padding-left:1.15em;display:grid;gap:6px;color:var(--ink);font-size:.95rem;line-height:1.5}
+  .how li::marker{color:var(--violet)}
+  .retry{justify-self:start;font:600 .95rem 'Outfit',sans-serif;color:var(--bg);background:var(--cyan);border:0;border-radius:10px;padding:10px 16px;cursor:pointer}
+  .retry:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  footer{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:.88rem}
+  footer a{color:var(--muted)}
+  [hidden]{display:none!important}
+  @media (max-width:420px){ .stats{grid-template-columns:1fr 1fr} .stat.wide{grid-column:1 / -1} }
+</style>
+</head>
+<body>
+<div class="cosmos" aria-hidden="true"></div>
+<main>
+  <a class="brand" href="/"><b>37</b> The Math Puzzle</a>
+
+  <header>
+    <p class="eyebrow" id="eyebrow">$37 weekly giveaway</p>
+    <h1>This week&rsquo;s hat</h1>
+    <p class="range" id="range">Loading this week&rsquo;s entrants&hellip;</p>
+  </header>
+
+  <section class="winner" id="winner" hidden aria-live="polite">
+    <span class="label">This week&rsquo;s winner</span>
+    <span class="name" id="winnerName"></span>
+    <span class="sub" id="winnerSub"></span>
+  </section>
+
+  <section class="stats" id="stats" hidden>
+    <div class="stat"><b id="statEntries">0</b><span>entries</span></div>
+    <div class="stat"><b id="statPlayers">0</b><span>players</span></div>
+    <div class="stat gold wide"><b id="statCountdown">&ndash;</b><span id="statCountdownLabel">until the drawing</span></div>
+  </section>
+
+  <p class="note" id="updated" hidden></p>
+  <p class="note warn" id="error" hidden role="alert">The entrant list isn&rsquo;t available right now. Try again in a few minutes.</p>
+  <button class="retry" id="retry" type="button" hidden>Try again</button>
+
+  <input class="find" id="find" type="search" placeholder="Find your username" aria-label="Find your username" autocomplete="off" hidden>
+  <ol class="list" id="list" aria-label="Entrants, most entries first"></ol>
+  <p class="empty" id="empty" hidden></p>
+
+  <section class="how">
+    <h2>How it works</h2>
+    <ul>
+      <li>Every Daily Challenge you finish is one entry: Easy, Challenge and Expert, so up to 3 a day and 21 a week. Your solve time doesn&rsquo;t matter.</li>
+      <li>This list updates once a day, shortly after midnight ET, with the Dailies finished the day before.</li>
+      <li>One entry is drawn at random on Sunday by 9:00pm ET, so every entry has the same chance. More entries, better odds.</li>
+      <li>To be entered you need to be 18+ and live in the US, have a saved account with an email, and tick the 18+/US box in the app.</li>
+      <li>Rather not be named here? Email <a href="mailto:contactus@hiipointegames.com">contactus@hiipointegames.com</a> and you&rsquo;ll be listed as &ldquo;Anonymous entrant&rdquo;. Your entries still count.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <a href="/#prize">Official rules</a>
+    <a href="/terms">Terms</a>
+    <a href="/privacy">Privacy</a>
+    <span>No purchase necessary. Sponsored solely by HiiPointe Games LLC; not associated with Apple or Google.</span>
+  </footer>
+</main>
+
+<script src="/draw/drawPool.js"></script>
+<script>
+(function () {
+  'use strict';
+  // The same public project URL and publishable key as /play. Publishable by
+  // design: the database only lets it call get_contest_pool().
+  var SOURCE = window.__DRAW_SOURCE__ || {
+    url: 'https://xpruolmmhssfrgqkcfqx.supabase.co',
+    key: 'sb_publishable_inh_7hk5qODnKu-fLBGVmw_N4codqp9',
+  };
+  var $ = function (id) { return document.getElementById(id); };
+  var vm = null;
+
+  function show(id, on) { $(id).hidden = !on; }
+
+  function renderRows() {
+    var list = $('list');
+    list.textContent = '';
+    if (!vm) return;
+    var rows = window.DrawPool.filterRows(vm.rows, $('find').value);
+    var winnerName = vm.winner ? vm.winner.name : null;
+    rows.forEach(function (r) {
+      var li = document.createElement('li');
+      li.className = 'row' + (winnerName && r.name === winnerName ? ' is-winner' : '');
+      var rank = document.createElement('span'); rank.className = 'rank'; rank.textContent = r.rank;
+      var name = document.createElement('span'); name.className = 'name'; name.textContent = r.name; name.title = r.name;
+      var count = document.createElement('span'); count.className = 'count';
+      count.textContent = r.entries + (r.entries === 1 ? ' entry' : ' entries');
+      var odds = document.createElement('small'); odds.textContent = r.odds; count.appendChild(odds);
+      var bar = document.createElement('span'); bar.className = 'bar'; bar.setAttribute('aria-hidden', 'true');
+      var fill = document.createElement('i'); fill.style.width = r.bar + '%'; bar.appendChild(fill);
+      li.append(rank, name, count, bar);
+      list.appendChild(li);
+    });
+    // With no entrants at all, render() owns the empty message; only a search
+    // that matches nobody is this function's business.
+    if (vm.rows.length === 0) return;
+    var noMatch = rows.length === 0;
+    show('empty', noMatch);
+    if (noMatch) $('empty').textContent = 'No entrant matches that name this week.';
+  }
+
+  function render(pool) {
+    vm = window.DrawPool.viewModel(pool);
+    $('eyebrow').textContent = '$37 weekly giveaway · Drawing ' + vm.number + ' of ' + vm.totalDrawings;
+    $('range').textContent = 'Dailies from ' + vm.rangeText + ' · drawn ' + vm.drawingText + ' by 9:00pm ET';
+    show('error', false); show('retry', false);
+
+    show('winner', vm.state === 'drawn');
+    if (vm.winner) {
+      $('winnerName').textContent = vm.winner.name;
+      $('winnerSub').textContent = 'Drawn at random, ' + vm.winner.ticketText + '. Congratulations!';
+    }
+
+    show('stats', vm.state !== 'ended');
+    $('statEntries').textContent = vm.totalEntries;
+    $('statPlayers').textContent = vm.playerCount;
+    $('statCountdown').textContent = vm.state === 'drawn' ? 'Drawn' : vm.countdown;
+    $('statCountdownLabel').textContent = vm.state === 'drawn' ? 'see you next week' : 'until the drawing';
+
+    show('updated', Boolean(vm.updatedText));
+    $('updated').textContent = vm.updatedText
+      ? 'Updated ' + vm.updatedText + ' · includes Dailies through ' + vm.throughText
+      : '';
+
+    var hasRows = vm.rows.length > 0;
+    show('find', hasRows);
+    show('empty', !hasRows);
+    if (!hasRows) {
+      $('empty').textContent = vm.state === 'ended'
+        ? 'The giveaway has ended. Thank you to everyone who played!'
+        : 'No entries saved yet this week. The first update comes shortly after midnight ET.';
+    }
+    renderRows();
+  }
+
+  function load() {
+    fetch(SOURCE.url + '/rest/v1/rpc/get_contest_pool', {
+      method: 'POST',
+      headers: { apikey: SOURCE.key, 'Content-Type': 'application/json' },
+      body: '{}',
+    })
+      .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then(render)
+      .catch(function () {
+        $('range').textContent = '';
+        show('stats', false); show('winner', false); show('updated', false); show('find', false);
+        show('error', true); show('retry', true);
+      });
+  }
+
+  $('find').addEventListener('input', renderRows);
+  $('retry').addEventListener('click', load);
+  // Keep the countdown honest while the page stays open.
+  setInterval(function () {
+    if (vm && vm.state !== 'drawn' && vm.state !== 'ended') {
+      $('statCountdown').textContent = window.DrawPool.countdownText(
+        window.DrawPool.drawDeadline(vm.drawingIso || '').getTime() - Date.now());
+    }
+  }, 30000);
+  load();
+})();
+</script>
+</body>
+</html>

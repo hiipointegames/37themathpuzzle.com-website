@@ -17,6 +17,10 @@
       "destination": "/play/index.html"
     },
     {
+      "source": "/draw",
+      "destination": "/draw/index.html"
+    },
+    {
       "source": "/play/:code",
       "destination": "/api/play?code=:code"
     }
