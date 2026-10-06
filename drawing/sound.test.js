@@ -8,35 +8,41 @@ const S = require('./sound');
 
 const close = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 
-test('notes: A4 is 440 Hz, an octave doubles, A1 is the 55 Hz sub', () => {
+test('notes: A4 is 440 Hz, an octave doubles, D2 is the sub', () => {
   assert.ok(close(S.noteFreq(69), 440));
   assert.ok(close(S.noteFreq(81), 880));
-  assert.ok(close(S.noteFreq(33), 55));
+  assert.ok(close(S.noteFreq(38), 73.41619, 1e-4));
 });
 
-test('the progression runs Am, F, C, E and wraps either way', () => {
-  assert.deepStrictEqual(S.chordAt(0), [45, 48, 52]);     // A C E
-  assert.deepStrictEqual(S.chordAt(1), [41, 45, 48]);     // F A C
-  assert.deepStrictEqual(S.chordAt(2), [48, 52, 55]);     // C E G
-  assert.deepStrictEqual(S.chordAt(3), [40, 44, 47]);     // E G# B
+test('the pad drifts Dmaj9, Bm9, Gmaj7#11, A6/9 and wraps either way', () => {
+  const names = (c) => c.map((m) => ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][m % 12]).join(' ');
+  assert.strictEqual(names(S.chordAt(0)), 'D A C# E F#');
+  assert.strictEqual(names(S.chordAt(1)), 'B F# A C# D');
+  assert.strictEqual(names(S.chordAt(2)), 'G D F# C# F#');
+  assert.strictEqual(names(S.chordAt(3)), 'A E F# B C#');
   assert.deepStrictEqual(S.chordAt(4), S.chordAt(0));
   assert.deepStrictEqual(S.chordAt(-1), S.chordAt(3));
   const c = S.chordAt(0); c.push(99);                     // a copy, not the table
-  assert.deepStrictEqual(S.chordAt(0), [45, 48, 52]);
+  assert.strictEqual(S.chordAt(0).length, 5);
 });
 
-test('heartbeat: lub-dub pairs at 72 bpm, each beat booked exactly once across windows', () => {
-  const start = 10, period = 60 / 72;
-  const a = S.heartbeatTimes(10, 11, 72, start);
-  // 10.00 lub, 10.18 dub, 10.83 lub — its dub (11.01) belongs to the next window
-  assert.deepStrictEqual(a.map((b) => b.accent), [true, false, true]);
-  assert.ok(close(a[0].t, 10) && close(a[1].t, 10.18) && close(a[2].t, 10 + period));
-  // Consecutive look-ahead windows never double-book or drop a beat.
-  const windows = [[10, 10.6], [10.6, 11.2], [11.2, 11.8], [11.8, 12.4]];
-  const all = windows.flatMap(([t0, t1]) => S.heartbeatTimes(t0, t1, 72, start)).map((b) => +b.t.toFixed(4));
-  const whole = S.heartbeatTimes(10, 12.4, 72, start).map((b) => +b.t.toFixed(4));
-  assert.deepStrictEqual(all, whole);
-  assert.ok(close(whole[2], 10 + period, 1e-3));
+test('star twinkles stay in the sparkle range and only use the chord\'s notes', () => {
+  for (let n = 0; n < 4; n++) {
+    const chord = S.chordAt(n), pool = S.twinklePool(chord);
+    assert.ok(pool.length >= 4, 'enough stars to choose from');
+    assert.ok(pool.every((m) => m >= 74 && m <= 98), 'all in MIDI 74..98');
+    const classes = new Set(chord.map((m) => m % 12));
+    assert.ok(pool.every((m) => classes.has(m % 12)), 'consonant with the pad');
+    assert.deepStrictEqual(pool, [...new Set(pool)].sort((a, b) => a - b));   // sorted, no repeats
+  }
+});
+
+test('the reverb fades smoothly from full to -60 dB over its tail', () => {
+  assert.ok(close(S.reverbEnvelope(0, 6), 1));
+  assert.ok(close(S.reverbEnvelope(6, 6), 0.001));         // -60 dB
+  assert.ok(close(S.reverbEnvelope(3, 6), Math.sqrt(0.001)));
+  let prev = 2;
+  for (let t = 0; t <= 6; t += 0.25) { const v = S.reverbEnvelope(t, 6); assert.ok(v < prev); prev = v; }
 });
 
 test('thunder: close strikes arrive fast, distant ones later, never instantly', () => {
