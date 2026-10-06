@@ -17,8 +17,16 @@
       "destination": "/play/index.html"
     },
     {
+      "source": "/drawing",
+      "destination": "/drawing/index.html"
+    },
+    {
       "source": "/draw",
-      "destination": "/draw/index.html"
+      "destination": "/drawing/index.html"
+    },
+    {
+      "source": "/draw/",
+      "destination": "/drawing/index.html"
     },
     {
       "source": "/play/:code",
@@ -30,5 +38,17 @@
       "includeFiles": "play/index.html",
       "maxDuration": 5
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/draw",
+      "destination": "/drawing",
+      "permanent": true
+    },
+    {
+      "source": "/draw/",
+      "destination": "/drawing",
+      "permanent": true
+    }
+  ]
 }
