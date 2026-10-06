@@ -1,5 +1,5 @@
-// Run: node --test draw/drawPool.test.js
-// Tests for the /draw page's logic (draw/drawPool.js).
+// Run: node --test drawing/drawPool.test.js
+// Tests for the /drawing page's logic (drawing/drawPool.js).
 'use strict';
 
 const test = require('node:test');
@@ -107,6 +107,42 @@ test('view model: after the last drawing the promotion reads as ended', () => {
 test('names are kept as plain strings (the page renders them with textContent)', () => {
   const vm = P.viewModel({ ...WEEK3, players: [{ name: '<img src=x onerror=alert(1)>', entries: 2 }] });
   assert.strictEqual(vm.rows[0].name, '<img src=x onerror=alert(1)>');
+});
+
+test('wheel slices are contiguous, sized by entries, and close the circle', () => {
+  const s = P.wheelSlices([{ name: 'a', entries: 3 }, { name: 'b', entries: 1 }]);
+  const TAU = Math.PI * 2;
+  assert.strictEqual(s.length, 2);
+  assert.strictEqual(s[0].start, 0);
+  assert.ok(Math.abs(s[0].end - TAU * 0.75) < 1e-9);
+  assert.strictEqual(s[1].start, s[0].end);
+  assert.ok(Math.abs(s[1].end - TAU) < 1e-9);
+  assert.deepStrictEqual(P.wheelSlices([]), []);
+  assert.strictEqual(s[0].hue, P.hueOf(0));
+});
+
+test('at rest, the winner sits under the pointer; with no winner the wheel is untouched', () => {
+  const s = P.wheelSlices([{ name: 'a', entries: 2 }, { name: 'b', entries: 2 }]);
+  // b spans 180°–360°, so its middle (270°) must turn back to 12 o'clock.
+  assert.ok(Math.abs(P.restRotation(s, 'b') + Math.PI * 1.5) < 1e-9);
+  assert.strictEqual(P.restRotation(s, null), 0);
+  assert.strictEqual(P.restRotation(s, 'not-in-the-list'), 0);
+});
+
+test('videos: this drawing, else the latest earlier one; https links only', () => {
+  const videos = {
+    '2026-10-04': 'https://youtube.com/shorts/week2',
+    '2026-10-11': 'https://youtube.com/shorts/week3',
+    '2026-10-18': 'javascript:alert(1)',
+    'not-a-date': 'https://example.com',
+  };
+  assert.strictEqual(P.videoFor(videos, '2026-10-11'), 'https://youtube.com/shorts/week3');
+  assert.strictEqual(P.videoFor(videos, '2026-10-18'), null);
+  assert.strictEqual(P.videoFor(null, '2026-10-11'), null);
+  assert.deepStrictEqual(P.lastVideo(videos, '2026-10-18'),
+    { drawing: '2026-10-11', dateText: 'Sun 11 Oct', url: 'https://youtube.com/shorts/week3' });
+  assert.strictEqual(P.lastVideo(videos, '2026-10-04'), null);
+  assert.strictEqual(P.lastVideo({}, '2026-10-11'), null);
 });
 
 test('search finds a username anywhere in it, ignoring case', () => {

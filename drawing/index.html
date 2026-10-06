@@ -96,6 +96,17 @@
   footer{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:.88rem}
   footer a{color:var(--muted)}
   [hidden]{display:none!important}
+  .wheelbox{display:grid;justify-items:center;gap:10px}
+  .wheelbox canvas{width:min(100%,380px);aspect-ratio:1;display:block}
+  .wheel-cap{color:var(--muted);font-size:.86rem;text-align:center;max-width:46ch}
+  .video{
+    justify-self:center;display:inline-flex;align-items:center;gap:8px;text-decoration:none;
+    font:600 .95rem 'Outfit',sans-serif;color:var(--ink);border:1px solid rgba(31,240,255,.45);
+    border-radius:999px;padding:9px 16px;background:rgba(31,240,255,.08);
+  }
+  .video:hover{background:rgba(31,240,255,.16)}
+  .video:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .video b{color:var(--cyan)}
   @media (max-width:420px){ .stats{grid-template-columns:1fr 1fr} .stat.wide{grid-column:1 / -1} }
 </style>
 </head>
@@ -114,6 +125,7 @@
     <span class="label">This week&rsquo;s winner</span>
     <span class="name" id="winnerName"></span>
     <span class="sub" id="winnerSub"></span>
+    <a class="video" id="winnerVideo" hidden target="_blank" rel="noopener"><b>&#9654;</b> Watch the draw</a>
   </section>
 
   <section class="stats" id="stats" hidden>
@@ -121,6 +133,15 @@
     <div class="stat"><b id="statPlayers">0</b><span>players</span></div>
     <div class="stat gold wide"><b id="statCountdown">&ndash;</b><span id="statCountdownLabel">until the drawing</span></div>
   </section>
+
+  <!-- A still picture of the hat. It never spins here: the draw happens live on
+       Sunday, and a page visitors could spin would invite "I won!" screenshots. -->
+  <section class="wheelbox" id="wheelbox" hidden>
+    <canvas id="wheel" width="760" height="760" role="img" aria-label="This week's hat as a wheel"></canvas>
+    <p class="wheel-cap" id="wheelCap">Each slice is one player, sized by their entries. The real wheel is spun live on Sunday.</p>
+  </section>
+
+  <a class="video" id="lastVideo" hidden target="_blank" rel="noopener"><b>&#9654;</b> <span id="lastVideoText">Watch last Sunday&rsquo;s draw</span></a>
 
   <p class="note" id="updated" hidden></p>
   <p class="note warn" id="error" hidden role="alert">The entrant list isn&rsquo;t available right now. Try again in a few minutes.</p>
@@ -149,7 +170,7 @@
   </footer>
 </main>
 
-<script src="/draw/drawPool.js"></script>
+<script src="/drawing/drawPool.js"></script>
 <script>
 (function () {
   'use strict';
@@ -161,8 +182,102 @@
   };
   var $ = function (id) { return document.getElementById(id); };
   var vm = null;
+  var videos = null;   // drawing/videos.json: { "YYYY-MM-DD": "https://…" }
 
   function show(id, on) { $(id).hidden = !on; }
+
+  // The wheel picture: drawn once per render, never animated.
+  function drawWheel() {
+    var cv = $('wheel');
+    var ctx = cv.getContext('2d');
+    var P = window.DrawPool;
+    var slices = P.wheelSlices(vm.rows);
+    var winner = vm.winner ? vm.winner.name : null;
+    var turn = P.restRotation(slices, winner);
+    var S = cv.width, C = S / 2, R = S * 0.42, TOP = -Math.PI / 2;
+    ctx.clearRect(0, 0, S, S);
+
+    // Rim glow
+    ctx.save();
+    ctx.beginPath(); ctx.arc(C, C, R + 10, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(177,59,255,.45)'; ctx.lineWidth = 10;
+    ctx.shadowColor = '#b13bff'; ctx.shadowBlur = 30; ctx.stroke();
+    ctx.restore();
+
+    slices.forEach(function (s) {
+      var a0 = TOP + s.start + turn, a1 = TOP + s.end + turn;
+      var dim = winner && s.name !== winner;
+      ctx.beginPath(); ctx.moveTo(C, C); ctx.arc(C, C, R, a0, a1); ctx.closePath();
+      ctx.fillStyle = 'hsl(' + s.hue.toFixed(1) + ' 85% ' + (dim ? '24%' : '58%') + ')';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(5,3,16,.85)'; ctx.lineWidth = 2; ctx.stroke();
+
+      // Names only where the slice is wide enough to read; the list has the rest.
+      if (s.end - s.start >= 0.2) {
+        var mid = (a0 + a1) / 2;
+        ctx.save();
+        ctx.translate(C, C); ctx.rotate(mid);
+        var flip = Math.cos(mid) < 0;
+        if (flip) ctx.rotate(Math.PI);
+        ctx.fillStyle = dim ? 'rgba(238,234,255,.55)' : '#0b0718';
+        ctx.font = '600 ' + Math.round(S * 0.032) + "px Outfit, system-ui, sans-serif";
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = flip ? 'left' : 'right';
+        // Start inside the pointer's reach (it covers ~34px of the rim at 12
+        // o'clock, exactly where the winner's name rests) and stop short of the hub.
+        var label = s.name, edge = R - 52, maxW = R * 0.5;
+        while (label.length > 2 && ctx.measureText(label).width > maxW) label = label.slice(0, -2) + '…';
+        ctx.fillText(label, flip ? -edge : edge, 0);
+        ctx.restore();
+      }
+    });
+
+    if (winner) {
+      // Gold edge on the winning slice.
+      slices.forEach(function (s) {
+        if (s.name !== winner) return;
+        ctx.beginPath(); ctx.moveTo(C, C); ctx.arc(C, C, R, TOP + s.start + turn, TOP + s.end + turn); ctx.closePath();
+        ctx.strokeStyle = '#ffcf3a'; ctx.lineWidth = 6; ctx.shadowColor = '#ffcf3a'; ctx.shadowBlur = 18; ctx.stroke();
+        ctx.shadowBlur = 0;
+      });
+    }
+
+    // Hub
+    ctx.beginPath(); ctx.arc(C, C, R * 0.22, 0, Math.PI * 2);
+    ctx.fillStyle = '#0b0718'; ctx.fill();
+    ctx.strokeStyle = 'rgba(177,59,255,.6)'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#ffcf3a'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.font = '700 ' + Math.round(S * 0.07) + "px Fredoka, system-ui, sans-serif";
+    ctx.fillText(String(vm.totalEntries), C, C + S * 0.012);
+    ctx.fillStyle = '#a9a3cc'; ctx.font = '600 ' + Math.round(S * 0.026) + "px Outfit, system-ui, sans-serif";
+    ctx.fillText('ENTRIES', C, C + S * 0.05);
+
+    // Pointer at 12 o'clock
+    ctx.beginPath();
+    ctx.moveTo(C, C - R + 34); ctx.lineTo(C - 20, C - R - 22); ctx.lineTo(C + 20, C - R - 22); ctx.closePath();
+    ctx.fillStyle = '#1ff0ff'; ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = 16; ctx.fill(); ctx.shadowBlur = 0;
+
+    cv.setAttribute('aria-label', winner
+      ? 'Wheel picture of this week\'s hat, resting on the winner, ' + winner + '.'
+      : 'Wheel picture of this week\'s hat: ' + vm.playerCount + ' players, ' + vm.totalEntries + ' entries. Biggest slice: ' + (vm.rows[0] ? vm.rows[0].name : 'none') + '.');
+    $('wheelCap').textContent = winner
+      ? 'The wheel as it landed on Sunday. Each slice is one player, sized by their entries.'
+      : 'Each slice is one player, sized by their entries. The real wheel is spun live on Sunday.';
+  }
+
+  function renderVideos() {
+    if (!vm) return;
+    var P = window.DrawPool;
+    var mine = P.videoFor(videos, vm.drawingIso);
+    show('winnerVideo', Boolean(vm.winner && mine));
+    if (mine) $('winnerVideo').href = mine;
+    var last = mine ? null : P.lastVideo(videos, vm.drawingIso);
+    show('lastVideo', Boolean(last));
+    if (last) {
+      $('lastVideo').href = last.url;
+      $('lastVideoText').textContent = 'Watch the last draw (' + last.dateText + ')';
+    }
+  }
 
   function renderRows() {
     var list = $('list');
@@ -215,6 +330,9 @@
       : '';
 
     var hasRows = vm.rows.length > 0;
+    show('wheelbox', hasRows);
+    if (hasRows) drawWheel();
+    renderVideos();
     show('find', hasRows);
     show('empty', !hasRows);
     if (!hasRows) {
@@ -236,9 +354,21 @@
       .catch(function () {
         $('range').textContent = '';
         show('stats', false); show('winner', false); show('updated', false); show('find', false);
+        show('wheelbox', false);
         show('error', true); show('retry', true);
       });
   }
+
+  // The canvas cannot wait for web fonts by itself; redraw once they arrive.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { if (vm && vm.rows.length) drawWheel(); });
+  }
+
+  // Videos are optional: a missing or broken file just means no link.
+  fetch('/drawing/videos.json', { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (v) { videos = v; renderVideos(); })
+    .catch(function () {});
 
   $('find').addEventListener('input', renderRows);
   $('retry').addEventListener('click', load);

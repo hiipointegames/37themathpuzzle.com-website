@@ -1,5 +1,5 @@
-// The /draw page's logic, kept apart from the page so it can be tested:
-//   node --test draw/drawPool.test.js
+// The /drawing page's logic, kept apart from the page so it can be tested:
+//   node --test drawing/drawPool.test.js
 //
 // Input is what Supabase's get_contest_pool() returns (migration
 // 20261004200000_contest_public_pool.sql in the app repo):
@@ -134,6 +134,60 @@
     };
   }
 
+  // ── The wheel picture ────────────────────────────────────────────────────
+  // A still picture of the hat, never a spinner: visitors cannot spin it, and
+  // nothing on the page animates as if a draw were happening. Angles are in
+  // radians, measured clockwise from 12 o'clock (where the pointer sits).
+
+  /** Same golden-angle hues as the drawing wheel, so a player keeps a colour. */
+  function hueOf(i) { return (282 + i * 137.508) % 360; }
+
+  /** One contiguous slice per player, sized by entries, in list order. */
+  function wheelSlices(rows) {
+    var total = rows.reduce(function (s, r) { return s + r.entries; }, 0);
+    if (!total) return [];
+    var at = 0;
+    return rows.map(function (r, i) {
+      var sweep = (r.entries / total) * Math.PI * 2;
+      var s = { name: r.name, entries: r.entries, start: at, end: at + sweep, hue: hueOf(i) };
+      at += sweep;
+      return s;
+    });
+  }
+
+  /**
+   * How far to turn the wheel so it rests with the winner's slice under the
+   * pointer (0 when there is no winner, or the winner is not in the list).
+   */
+  function restRotation(slices, winnerName) {
+    if (!winnerName) return 0;
+    for (var i = 0; i < slices.length; i++) {
+      if (slices[i].name === winnerName) return -((slices[i].start + slices[i].end) / 2);
+    }
+    return 0;
+  }
+
+  // ── Draw videos ──────────────────────────────────────────────────────────
+  // drawing/videos.json maps a drawing date to its video: { "2026-10-11": "https://…" }.
+  // Only https links are ever used; anything else is ignored.
+  function safeUrl(u) { return typeof u === 'string' && /^https:\/\/[^\s"'<>]+$/.test(u) ? u : null; }
+
+  /** This drawing's video, if posted. */
+  function videoFor(videos, drawingIso) {
+    return videos ? safeUrl(videos[drawingIso]) : null;
+  }
+
+  /** The most recent earlier drawing that has a video: { drawing, url } or null. */
+  function lastVideo(videos, drawingIso) {
+    if (!videos) return null;
+    var keys = Object.keys(videos).filter(function (k) {
+      return /^\d{4}-\d{2}-\d{2}$/.test(k) && k < drawingIso && safeUrl(videos[k]);
+    }).sort();
+    if (!keys.length) return null;
+    var k = keys[keys.length - 1];
+    return { drawing: k, dateText: shortDate(k), url: safeUrl(videos[k]) };
+  }
+
   /** Rows whose name contains the query, case-insensitively. Empty query: all. */
   function filterRows(rows, query) {
     var q = String(query || '').trim().toLowerCase();
@@ -152,5 +206,10 @@
     rankRows: rankRows,
     viewModel: viewModel,
     filterRows: filterRows,
+    hueOf: hueOf,
+    wheelSlices: wheelSlices,
+    restRotation: restRotation,
+    videoFor: videoFor,
+    lastVideo: lastVideo,
   };
 });
