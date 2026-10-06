@@ -40,6 +40,17 @@
       var(--bg);
   }
   #sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+  #fx{position:fixed;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
+  .sound-btn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:6;
+    font:600 .9rem 'Outfit',sans-serif;color:var(--ink);background:rgba(12,8,30,.85);
+    border:1px solid rgba(31,240,255,.5);border-radius:999px;padding:10px 16px;cursor:pointer;
+    box-shadow:0 0 18px rgba(31,240,255,.25);backdrop-filter:blur(6px)}
+  .sound-btn[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 22px rgba(255,207,58,.4)}
+  .sound-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .sound-btn .si{margin-right:6px}
+  @media (max-width:520px){ .sound-btn{width:48px;height:48px;padding:0;display:grid;place-items:center;font-size:1.25rem} .sound-btn .si{margin:0} .sound-btn .sl{display:none} }
+  .wheelbox.shake{animation:jolt .32s cubic-bezier(.36,.07,.19,.97)}
+  @keyframes jolt{20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,1px)}80%{transform:translate(2px,-1px)}}
   main{position:relative;z-index:1;max-width:720px;margin:0 auto;padding-inline:18px;padding-block:28px 64px;display:grid;gap:22px}
 
   .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font:700 1.05rem 'Fredoka',sans-serif;justify-self:start}
@@ -107,6 +118,8 @@
   .teaser{display:grid;justify-items:center;gap:2px;min-height:3.4em;text-align:center;
     opacity:0;transform:translateY(6px);transition:opacity .45s ease,transform .45s ease}
   .teaser.on{opacity:1;transform:none}
+  .teaser.on .t-q{animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
   .teaser .t-q{font:600 1.15rem 'Fredoka',sans-serif;color:var(--ink)}
   .teaser b{color:var(--gold);text-shadow:0 0 14px rgba(255,207,58,.55)}
   .teaser small{font-size:.8rem;color:var(--muted)}
@@ -138,6 +151,8 @@
 <body>
 <div class="cosmos" aria-hidden="true"></div>
 <canvas id="sky" aria-hidden="true"></canvas>
+<canvas id="fx" aria-hidden="true"></canvas>
+<button class="sound-btn" id="soundBtn" type="button" aria-pressed="false" aria-label="Sound off" hidden><span class="si" aria-hidden="true">&#x1F507;</span><span class="sl">Sound off</span></button>
 <main>
   <a class="brand" href="/"><b>37</b> The Math Puzzle</a>
 
@@ -205,6 +220,7 @@
 </main>
 
 <script src="/drawing/drawPool.js"></script>
+<script src="/drawing/sound.js"></script>
 <script>
 (function () {
   'use strict';
@@ -418,6 +434,14 @@
       }
     }
 
+    // the hub's heartbeat glow
+    if (!reduceMotion) {
+      var beat = ((now / 1000) * 72 / 60) % 1, pulse = Math.max(Math.exp(-beat * 9), 0.7 * Math.exp(-Math.abs(beat - 0.22) * 14));
+      ctx.save(); ctx.beginPath(); ctx.arc(C, C, R * 0.26, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,207,58,' + (0.25 + 0.6 * pulse) + ')'; ctx.lineWidth = S * (0.006 + 0.006 * pulse);
+      ctx.shadowColor = '#ffcf3a'; ctx.shadowBlur = S * 0.05 * pulse; ctx.stroke(); ctx.restore();
+    }
+
     // pointer at 12 o'clock
     ctx.save(); ctx.beginPath();
     ctx.moveTo(C, C - R + S * 0.045); ctx.lineTo(C - S * 0.03, C - R - S * 0.05); ctx.lineTo(C + S * 0.03, C - R - S * 0.05); ctx.closePath();
@@ -516,6 +540,7 @@
         depth: 7, roughness: 0.2, forks: 2 + Math.floor(Math.random() * 3) }));
     }
     skyBolts.push({ born: now, life: 900, shapes: shapes, intensity: intensity });
+    if (sound) sound.thunder(intensity);
     skyFlash(0.24 * intensity);
   }
 
@@ -531,8 +556,8 @@
   function paintSky(now) {
     var P = window.DrawPool;
     skyBolts = skyBolts.filter(function (b) { return now - b.born < b.life; });
-    if (!skyBolts.length && !skyDirty && flashLevel <= 0) return;
     skyCtx.clearRect(0, 0, sky.width, sky.height);
+    if (!reduceMotion) drawEmbers(now);
     skyDirty = skyBolts.length > 0;
     if (flashLevel > 0) {                           // the whole sky lights up, briefly and softly
       var gl = skyCtx.createRadialGradient(sky.width / 2, 0, 0, sky.width / 2, 0, sky.height * 1.1);
@@ -563,6 +588,118 @@
     });
   }
 
+  // ── FRONT EFFECTS: sparks, flare rings and a lens streak on each landing ──
+  // A full-window canvas IN FRONT of the content but click-through. Short-lived
+  // by design: everything here is gone within about a second.
+  var fx = $('fx'), fxCtx = fx.getContext('2d'), sparks = [], flares = [], fxDpr = 1;
+  function sizeFx() {
+    fxDpr = Math.min(window.devicePixelRatio || 1, 2);
+    fx.width = Math.round(innerWidth * fxDpr); fx.height = Math.round(innerHeight * fxDpr);
+  }
+  function pointerTip() {
+    var cv = $('wheel'), r = cv.getBoundingClientRect(), g = wheelGeom();
+    return [r.left + r.width / 2, r.top + r.height * ((g.C - g.R + g.S * 0.04) / g.S)];
+  }
+  function landingBurst(now) {
+    if (reduceMotion) return;
+    var p = pointerTip();
+    for (var i = 0; i < 70; i++) {
+      var a = -Math.PI / 2 + (Math.random() * 2 - 1) * 1.6, v = 2.5 + Math.random() * 7;
+      sparks.push({ x: p[0], y: p[1], vx: Math.cos(a) * v, vy: Math.sin(a) * v, born: now,
+        life: 700 + Math.random() * 600, gold: Math.random() < 0.7 });
+    }
+    flares.push({ x: p[0], y: p[1], born: now, life: 900, kind: 'ring' });
+    flares.push({ x: p[0], y: p[1], born: now, life: 700, kind: 'streak' });
+  }
+  function paintFx(now) {
+    if (!sparks.length && !flares.length) { if (fx.dataset.dirty) { fxCtx.clearRect(0, 0, fx.width, fx.height); delete fx.dataset.dirty; } return; }
+    fx.dataset.dirty = '1';
+    var d = fxDpr;
+    fxCtx.clearRect(0, 0, fx.width, fx.height);
+    fxCtx.save(); fxCtx.globalCompositeOperation = 'lighter';
+    flares = flares.filter(function (f) { return now - f.born < f.life; });
+    flares.forEach(function (f) {
+      var t = (now - f.born) / f.life, a = 1 - t;
+      if (f.kind === 'ring') {
+        fxCtx.beginPath(); fxCtx.arc(f.x * d, f.y * d, (20 + t * 260) * d, 0, Math.PI * 2);
+        fxCtx.strokeStyle = 'rgba(255,214,90,' + (0.75 * a) + ')'; fxCtx.lineWidth = (6 * (1 - t) + 1) * d;
+        fxCtx.shadowColor = '#ffcf3a'; fxCtx.shadowBlur = 30 * d; fxCtx.stroke();
+      } else {                                      // an anamorphic lens streak across the screen
+        var w = innerWidth * (0.3 + t * 0.9), h = 5 + 18 * a;
+        var gr = fxCtx.createRadialGradient(f.x * d, f.y * d, 0, f.x * d, f.y * d, w * d);
+        gr.addColorStop(0, 'rgba(255,255,255,' + (0.9 * a) + ')');
+        gr.addColorStop(0.15, 'rgba(160,240,255,' + (0.5 * a) + ')');
+        gr.addColorStop(1, 'rgba(120,80,255,0)');
+        fxCtx.save(); fxCtx.translate(f.x * d, f.y * d); fxCtx.scale(1, h / w); fxCtx.translate(-f.x * d, -f.y * d);
+        fxCtx.fillStyle = gr; fxCtx.beginPath(); fxCtx.arc(f.x * d, f.y * d, w * d, 0, Math.PI * 2); fxCtx.fill();
+        fxCtx.restore();
+      }
+    });
+    fxCtx.shadowBlur = 0;
+    sparks = sparks.filter(function (s) { return now - s.born < s.life; });
+    sparks.forEach(function (s) {
+      s.vy += 0.18; s.vx *= 0.985; s.x += s.vx; s.y += s.vy;
+      var a = 1 - (now - s.born) / s.life;
+      fxCtx.fillStyle = s.gold ? 'rgba(255,214,90,' + a + ')' : 'rgba(170,245,255,' + a + ')';
+      fxCtx.beginPath(); fxCtx.arc(s.x * d, s.y * d, (1.2 + 1.8 * a) * d, 0, Math.PI * 2); fxCtx.fill();
+    });
+    fxCtx.restore();
+  }
+
+  // ── EMBERS: a slow drift of sparks rising behind the page, always on ──────
+  var embers = [];
+  function seedEmbers() {
+    embers = Array.from({ length: Math.min(60, Math.round(innerWidth / 18)) }, function () {
+      return { x: Math.random() * innerWidth, y: Math.random() * innerHeight, v: 0.25 + Math.random() * 0.6,
+        r: 0.8 + Math.random() * 1.8, ph: Math.random() * 6.28, hue: Math.random() < 0.5 ? 300 : 40 };
+    });
+  }
+  function drawEmbers(now) {
+    var d = skyDpr;
+    skyCtx.save(); skyCtx.globalCompositeOperation = 'lighter';
+    embers.forEach(function (e) {
+      e.y -= e.v; e.x += Math.sin(now / 1400 + e.ph) * 0.3;
+      if (e.y < -10) { e.y = innerHeight + 10; e.x = Math.random() * innerWidth; }
+      var tw = 0.35 + 0.35 * Math.sin(now / 500 + e.ph);
+      skyCtx.fillStyle = 'hsla(' + e.hue + ',100%,70%,' + tw + ')';
+      skyCtx.beginPath(); skyCtx.arc(e.x * d, e.y * d, e.r * d, 0, Math.PI * 2); skyCtx.fill();
+    });
+    skyCtx.restore();
+  }
+
+  // ── SOUND ─────────────────────────────────────────────────────────────────
+  // Composed in code (drawing/sound.js). Off until "Sound" is tapped; the choice
+  // is remembered, and re-armed on the next tap anywhere (browsers need a tap).
+  var sound = window.DrawSound ? window.DrawSound.create(window.AudioContext || window.webkitAudioContext) : null;
+  function setSound(want) {
+    if (!sound) return;
+    if (want) sound.start(); else sound.stop();
+    var b = $('soundBtn');
+    b.setAttribute('aria-pressed', want ? 'true' : 'false');
+    b.querySelector('.si').textContent = want ? '🔊' : '🔇';
+    b.querySelector('.sl').textContent = want ? 'Sound on' : 'Sound off';
+    b.setAttribute('aria-label', want ? 'Sound on' : 'Sound off');
+    try { localStorage.setItem('drawing-sound', want ? 'on' : 'off'); } catch (e) { /* storage blocked: fine */ }
+  }
+  if (sound && (window.AudioContext || window.webkitAudioContext)) {
+    $('soundBtn').hidden = false;
+    $('soundBtn').addEventListener('click', function () { setSound(!sound.on); });
+    var wanted = false;
+    try { wanted = localStorage.getItem('drawing-sound') === 'on'; } catch (e) { /* ignore */ }
+    if (wanted) {
+      document.addEventListener('pointerdown', function arm(ev) {
+        document.removeEventListener('pointerdown', arm);
+        if (ev.target !== $('soundBtn') && !sound.on) setSound(true);
+      });
+    }
+  }
+
+  // A small jolt on the wheel for the big moments.
+  function shake() {
+    if (reduceMotion) return;
+    var w = $('wheelbox'); w.classList.remove('shake'); void w.offsetWidth; w.classList.add('shake');
+  }
+
   // ── THE ENDLESS TEASER ─────────────────────────────────────────────────────
   // spin (lightning strikes as it starts) → land → "Will ___ be this week's
   // winner? Tune in Sunday to find out!" → spin again. Every 30–60 s the wheel
@@ -581,6 +718,8 @@
       start: now, dur: 3200, pick: pick };
     wheel.highlight = -1;
     $('teaser').classList.remove('on');
+    if (sound) sound.riser(wheel.spin.dur / 1000);
+    shake();
   }
 
   function landSpin(now) {
@@ -591,6 +730,8 @@
     $('teaserName').textContent = s.name;
     $('teaser').classList.add('on');
     wheel.holdUntil = now + 2800;
+    landingBurst(now);
+    if (sound) sound.reveal();
   }
 
   // Stop where it is (a tap or a search wants the wheel still).
@@ -628,6 +769,7 @@
         if (now >= wheel.nextHole) {
           $('teaser').classList.remove('on');
           wheel.hole = { start: now, dur: 4200 };
+          if (sound) sound.hole(4.2);
           wheel.nextHole = now + 30000 + Math.random() * 30000;
           spawnSkyBolt(now, rimTarget(), 1);
         } else {
@@ -643,6 +785,7 @@
       paintWheel(now);
     }
     paintSky(now);
+    paintFx(now);
   }
 
   // One animation loop. It books its next frame BEFORE drawing this one, so a
@@ -754,8 +897,8 @@
     clearTimeout(wheel.tipHide);
     if (e.pointerType !== 'mouse') wheel.tipHide = setTimeout(function () { $('wheelTip').hidden = true; }, 2500);
   });
-  sizeSky();
-  window.addEventListener('resize', function () { sizeSky(); if (vm && vm.rows.length) drawWheel(); });
+  sizeSky(); sizeFx(); seedEmbers();
+  window.addEventListener('resize', function () { sizeSky(); sizeFx(); seedEmbers(); if (vm && vm.rows.length) drawWheel(); });
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden && vm && vm.rows.length) startLoop();
   });
