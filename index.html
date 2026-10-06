@@ -969,6 +969,18 @@
       background:rgba(255,255,255,.05)}
     .jump-nav .jump-play{color:var(--gold);border-color:rgba(245,200,75,.45)}
     .jump-nav .jump-play:hover{background:rgba(245,200,75,.12);color:var(--gold-bright)}
+    .top-stores{display:none}
+    @media(max-width:860px){
+      .top-stores{display:flex;gap:10px;justify-content:center;margin-bottom:18px}
+      .top-stores .store-btn{flex:1 1 0 !important;min-width:0 !important;padding:11px 10px !important;
+        justify-content:center !important;gap:8px !important}
+      .top-stores .store-btn .sm{display:none !important}
+      .top-stores .store-btn .lg{font-size:1.05rem !important}
+      .top-stores .store-btn svg{width:24px !important;height:24px !important}
+      .hero-cta .store-row{display:none}
+      .hero{padding-top:16px !important}
+    }
+    .jump-nav-bottom{padding:30px 16px 22px;margin-top:10px;border-top:1px solid rgba(255,255,255,.08)}
     /* This week's $37 drawing: the one pill that should catch the eye. */
     .jump-nav .jump-drawing{color:#fff;font-weight:600;border-color:rgba(255,43,208,.75);
       background:linear-gradient(95deg,rgba(255,43,208,.28),rgba(177,59,255,.28));
@@ -1109,11 +1121,11 @@
     .prize-inner{max-width:1120px;margin:0 auto;padding:11px 18px;
       display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
       text-align:center}
-    .prize-flash{font-size:1.25rem;line-height:1;animation:float 3.4s ease-in-out infinite}
+    .prize-flash{font-size:1.25rem;line-height:1}
     .prize-main{font-family:'Fredoka',sans-serif;font-weight:700;color:#1a1400;
       font-size:1.12rem;letter-spacing:-.2px;white-space:nowrap}
     .prize-main strong{font-size:1.28rem}
-    .prize-sub{color:#3a2d00;font-size:.9rem;font-weight:500;opacity:.92}
+    .prize-sub{color:#3a2d00;font-size:.9rem;font-weight:500;opacity:.92;flex:1 1 320px;min-width:0;max-width:640px}
     .prize-cta{flex:0 0 auto;background:#1a1400;color:#ffe07a;text-decoration:none;
       font-family:'Fredoka',sans-serif;font-weight:600;font-size:.86rem;
       padding:7px 16px;border-radius:999px;white-space:nowrap;
@@ -1125,7 +1137,8 @@
       .prize-inner{gap:7px;padding:10px 14px}
       .prize-main{font-size:1rem}
       .prize-main strong{font-size:1.15rem}
-      .prize-sub{font-size:.8rem;flex-basis:100%}
+      .prize-sub{display:none}          /* one line on phones; the details live in the rules */
+      .prize-inner{flex-wrap:nowrap}
       .prize-cta{font-size:.8rem;padding:6px 14px}
     }
     .rules-lede{max-width:640px;margin:0 auto 26px;text-align:center;color:var(--ink);
@@ -1432,23 +1445,11 @@
     <span class="prize-flash">🏆</span>
     <span class="prize-main">Win <strong>$37</strong> every week</span>
     <span class="prize-sub">Finish any Daily Challenge - Easy, Challenge or Expert - to enter Sunday’s draw. Up to 3 entries a day, 21 a week. Free to play.</span>
+    <a class="prize-cta" href="/drawing">See the drawing &rarr;</a>
   </div>
 </aside>
 
 <a class="skip-link" href="#main">Skip to content</a>
-<nav class="jump-nav" aria-label="Section navigation">
-  <a class="jump-drawing" href="/drawing"><span class="live-dot" aria-hidden="true"></span>This week&#x27;s $37 drawing</a>
-  <a href="#prize" data-goto="prize">$37 Prize Rules</a>
-  <a href="#how" data-goto="how">How to play</a>
-  <a href="#example" data-goto="example">Winning examples</a>
-  <a href="#modes" data-goto="modes">Game modes</a>
-  <a href="#reviews" data-goto="reviews">Reviews</a>
-  <a href="#faq" data-goto="faq">FAQ</a>
-  <a href="#at-a-glance" data-goto="at-a-glance">Quick facts</a>
-  <a href="/blog/">Blog</a>
-  <a href="mailto:contactus@hiipointegames.com">Contact us</a>
-  <a class="jump-play" href="https://37themathpuzzle.app" rel="noopener">Play in browser</a>
-</nav>
 <div class="cosmos"></div>
 <div class="galaxy"></div>
 <div class="nebula">
@@ -1464,6 +1465,17 @@
 
 <!-- HERO -->
 <header class="hero" id="top">
+  <!-- Phones only: download first. The pair further down is hidden on phones. -->
+  <div class="wrap top-stores">
+        <a class="store-btn" href="https://apps.apple.com/app/id6762534650" target="_blank" rel="noopener">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M17.05 12.04c-.03-3.02 2.47-4.47 2.58-4.54-1.41-2.06-3.6-2.34-4.38-2.37-1.86-.19-3.64 1.1-4.58 1.1-.95 0-2.4-1.08-3.95-1.05-2.03.03-3.9 1.18-4.94 3-2.11 3.66-.54 9.08 1.5 12.05 1 1.46 2.19 3.09 3.74 3.03 1.5-.06 2.07-.97 3.88-.97 1.8 0 2.32.97 3.9.94 1.61-.03 2.63-1.47 3.62-2.94 1.14-1.69 1.61-3.33 1.64-3.41-.04-.02-3.15-1.21-3.18-4.8zM14.13 3.36c.82-1 1.38-2.39 1.23-3.78-1.19.05-2.63.79-3.48 1.79-.76.88-1.43 2.29-1.25 3.64 1.33.1 2.68-.67 3.5-1.65z"></path></svg>
+          <span><span class="sm">Download on the</span><span class="lg">App Store</span></span>
+        </a>
+        <a class="store-btn" href="https://play.google.com/store/apps/details?id=com.hiipointegames.themathpuzzle37" target="_blank" rel="noopener">
+          <svg width="24" height="26" viewBox="0 0 24 24"><path fill="#00d9ff" d="M3.6 2.3C3.3 2.6 3.1 3 3.1 3.6v16.8c0 .6.2 1 .5 1.3l.1.1L13 12.6v-.2L3.7 2.2z"></path><path fill="#ffd400" d="M16.3 15.7L13 12.5v-.2l3.3-3.3.1.1 3.9 2.2c1.1.6 1.1 1.6 0 2.3l-3.9 2.1z"></path><path fill="#ff3333" d="M16.4 15.6L13 12.4 3.6 21.7c.4.4 1 .4 1.7.1l11.1-6.2"></path><path fill="#00f076" d="M16.4 9.1L5.3 2.9c-.7-.4-1.3-.3-1.7.1L13 12.4z"></path></svg>
+          <span><span class="sm">Get it on</span><span class="lg">Google Play</span></span>
+        </a>
+  </div>
   <div class="wrap hero-head">
     <h1 class="hero-title"><span class="hero-37">37</span><span class="hero-name"> - The Math Puzzle</span></h1>
   </div>
@@ -2204,6 +2216,19 @@
       </main>
 
 <!-- FOOTER -->
+<nav class="jump-nav jump-nav-bottom" aria-label="Section navigation">
+  <a class="jump-drawing" href="/drawing"><span class="live-dot" aria-hidden="true"></span>This week&#x27;s $37 drawing</a>
+  <a href="#prize" data-goto="prize">$37 Prize Rules</a>
+  <a href="#how" data-goto="how">How to play</a>
+  <a href="#example" data-goto="example">Winning examples</a>
+  <a href="#modes" data-goto="modes">Game modes</a>
+  <a href="#reviews" data-goto="reviews">Reviews</a>
+  <a href="#faq" data-goto="faq">FAQ</a>
+  <a href="#at-a-glance" data-goto="at-a-glance">Quick facts</a>
+  <a href="/blog/">Blog</a>
+  <a href="mailto:contactus@hiipointegames.com">Contact us</a>
+  <a class="jump-play" href="https://37themathpuzzle.app" rel="noopener">Play in browser</a>
+</nav>
 <footer>
     <p class="updated">Last updated <time datetime="2026-09-20">20 September 2026</time></p>
   <div class="wrap">
