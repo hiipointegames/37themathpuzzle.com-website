@@ -102,6 +102,18 @@
     font:600 .86rem 'Outfit',sans-serif;color:var(--ink);background:rgba(5,3,16,.92);
     border:1px solid rgba(31,240,255,.5);border-radius:10px;padding:6px 10px;z-index:2}
   .your-slice{font:600 .95rem 'Outfit',sans-serif;color:var(--cyan);text-align:center}
+  /* The teaser caption: space reserved so the page never jumps when it appears. */
+  .teaser{display:grid;justify-items:center;gap:2px;min-height:3.4em;text-align:center;
+    opacity:0;transform:translateY(6px);transition:opacity .45s ease,transform .45s ease}
+  .teaser.on{opacity:1;transform:none}
+  .teaser .t-q{font:600 1.15rem 'Fredoka',sans-serif;color:var(--ink)}
+  .teaser b{color:var(--gold);text-shadow:0 0 14px rgba(255,207,58,.55)}
+  .teaser small{font-size:.8rem;color:var(--muted)}
+  .row.pinned{border-color:var(--cyan);box-shadow:0 0 18px rgba(31,240,255,.25);cursor:pointer;
+    animation:pinIn .45s cubic-bezier(.2,.9,.3,1.2)}
+  .row.pinned .name::after{content:'  · selected';font-weight:500;font-size:.8rem;color:var(--cyan)}
+  @keyframes pinIn{from{opacity:0;transform:translateY(-10px) scale(.98)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.teaser{transition:none}.row.pinned{animation:none}}
   .legend{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;max-width:560px}
   .legend li{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--ink);min-width:0}
   .legend i{width:10px;height:10px;border-radius:3px;flex:none}
@@ -151,6 +163,10 @@
   <section class="wheelbox" id="wheelbox" hidden>
     <canvas id="wheel" width="760" height="760" role="img" aria-label="This week's hat as a wheel"></canvas>
     <span class="wheel-tip" id="wheelTip" hidden></span>
+    <p class="teaser" id="teaser" aria-live="polite">
+      <span class="t-q">Will the winner be <b id="teaserName"></b>?</span>
+      <small>Just a teaser. The real draw is live <span id="teaserDate">Sunday</span>.</small>
+    </p>
     <p class="your-slice" id="yourSlice" hidden aria-live="polite"></p>
     <ol class="legend" id="legend" hidden aria-label="Top players on the wheel"></ol>
     <p class="wheel-cap" id="wheelCap">Each slice is one player, sized by their entries. The real wheel is spun live on Sunday.</p>
@@ -205,30 +221,37 @@
 
   // ── THE WHEEL PICTURE ──────────────────────────────────────────────────────
   // Built for any size of hat. Every player has their own slice; the top 24 are
-  // coloured and named, the rest share a two-tone band. It NEVER spins: only the
-  // rim bulbs move (a slow chase, off under reduced motion). Tap or hover a slice
-  // to see whose it is; "Find your username" lights up your slice.
-  var wheel = { slices: [], turn: 0, base: null, size: 0, dpr: 1, highlight: -1, raf: 0, t: 0, last: 0 };
+  // coloured and named, the rest share a violet band. Tap or hover a slice to
+  // see whose it is (and pin them to the top of the list); "Find your username"
+  // lights up your slice.
+  //
+  // THE TEASER (David, 2026-10-05): lightning crackles faintly along the rim all
+  // the time, and every 10–14 s a big pulse spins the wheel and asks "Will the
+  // winner be …?". Safeguards, so it can never pass for a draw: the pick is FAIR
+  // (a random entry, so big slices win teasers in proportion), the caption says
+  // "just a teaser" in the same frame as the name, it stops for good once a real
+  // winner is recorded, and it pauses 20 s whenever someone taps or searches.
+  // Everything moving is off under reduced motion.
+  var wheel = { slices: [], turn: 0, baseTurn: 0, base: null, size: 0, dpr: 1, highlight: -1, raf: 0, t: 0, last: 0,
+    spin: null, selected: null, pauseUntil: 0, nextPulse: 0 };
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // Lightning: a crackle along the rim every few seconds. Rim only, never a
-  // slice or the pointer (a strike on a player would look like the wheel
-  // choosing them). Off under reduced motion.
+  // Lightning lives on the rim only, never a slice or the pointer.
   var bolts = [], nextBolt = 0;
-  function spawnBolt(now) {
+  function spawnBolt(now, intensity) {
     var g = wheelGeom(), P = window.DrawPool, paths = [];
-    var start = Math.random() * Math.PI * 2, span = 0.45 + Math.random() * 0.6;
+    var start = Math.random() * Math.PI * 2, span = (intensity >= 1 ? 0.7 : 0.35) + Math.random() * 0.6;
     for (var k = 0; k < 3; k++) {          // three shapes in quick succession: a flicker
       paths.push(P.rimBolt(Math.random, { cx: g.C, cy: g.C, r: g.R + g.S * 0.025, start: start, span: span,
-        jitter: g.S * 0.016, segments: 16, branchChance: 0.55 }));
+        jitter: g.S * (intensity >= 1 ? 0.02 : 0.012), segments: 16, branchChance: intensity >= 1 ? 0.8 : 0.35 }));
     }
-    bolts.push({ born: now, paths: paths });
+    bolts.push({ born: now, paths: paths, intensity: intensity, life: intensity >= 1 ? 650 : 380 });
   }
   function drawBolts(ctx, now) {
     var S = wheel.size, flash = 0;
-    bolts = bolts.filter(function (b) { return now - b.born < 420; });
+    bolts = bolts.filter(function (b) { return now - b.born < b.life; });
     bolts.forEach(function (b) {
-      var age = now - b.born, life = age / 420;
-      var alpha = life < 0.12 ? 1 : Math.max(0, 1 - (life - 0.12) / 0.88);
+      var age = now - b.born, life = age / b.life;
+      var alpha = (life < 0.12 ? 1 : Math.max(0, 1 - (life - 0.12) / 0.88)) * b.intensity;
       var path = b.paths[Math.min(2, Math.floor(age / 110))];
       flash = Math.max(flash, alpha);
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -261,6 +284,7 @@
     var ctx = off.getContext('2d');
     var winner = vm.winner ? vm.winner.name : null;
     var slices = wheel.slices, turn = wheel.turn;
+    wheel.baseTurn = turn;   // a spin rotates this image by (turn - baseTurn)
     var firstOther = slices.findIndex(function (s) { return !s.named; });
     var othersCount = firstOther < 0 ? 0 : slices.length - firstOther;
 
@@ -345,7 +369,12 @@
   function paintWheel(now) {
     var cv = $('wheel'), ctx = cv.getContext('2d'), g = wheelGeom(), S = g.S, C = g.C, R = g.R;
     ctx.clearRect(0, 0, S, S);
-    if (wheel.base) ctx.drawImage(wheel.base, 0, 0);
+    if (wheel.base) {
+      // During a spin the still picture is turned as one image: cheap at any
+      // number of slices. The rim and hub are round, so only the slices move.
+      ctx.save(); ctx.translate(C, C); ctx.rotate(wheel.turn - wheel.baseTurn); ctx.translate(-C, -C);
+      ctx.drawImage(wheel.base, 0, 0); ctx.restore();
+    }
 
     // lightning on the rim, and the rim's glow flaring with it
     var flash = reduceMotion ? 0 : drawBolts(ctx, now || performance.now());
@@ -374,14 +403,19 @@
       ctx.beginPath(); ctx.arc(C, C, R + S * 0.06, 0, Math.PI * 2); ctx.arc(C, C, R * 0.25, 0, Math.PI * 2, true); ctx.clip();
       ctx.beginPath(); ctx.moveTo(C, C);
       ctx.arc(C, C, R, g.TOP + h.start + wheel.turn, g.TOP + h.end + wheel.turn); ctx.closePath();
-      ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
       ctx.strokeStyle = '#ffffff'; ctx.lineWidth = S * 0.006; ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = S * 0.03; ctx.stroke();
-      // a marker out to the rim, so even a 1-entry sliver can be found
-      var mid = g.TOP + (h.start + h.end) / 2 + wheel.turn;
-      ctx.beginPath(); ctx.moveTo(C + Math.cos(mid) * (R * 0.3), C + Math.sin(mid) * (R * 0.3));
-      ctx.lineTo(C + Math.cos(mid) * (R + S * 0.045), C + Math.sin(mid) * (R + S * 0.045));
-      ctx.strokeStyle = '#1ff0ff'; ctx.lineWidth = S * 0.005; ctx.stroke();
       ctx.restore();
+      // A slice too thin to show its outline gets a glowing tick OUTSIDE the
+      // rim instead — nothing is ever drawn across a name.
+      if ((h.end - h.start) * R < S * 0.012) {
+        var mid = g.TOP + (h.start + h.end) / 2 + wheel.turn;
+        ctx.save(); ctx.beginPath();
+        ctx.moveTo(C + Math.cos(mid) * (R + S * 0.056), C + Math.sin(mid) * (R + S * 0.056));
+        ctx.lineTo(C + Math.cos(mid) * (R + S * 0.09), C + Math.sin(mid) * (R + S * 0.09));
+        ctx.strokeStyle = '#1ff0ff'; ctx.lineWidth = S * 0.008; ctx.lineCap = 'round';
+        ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = S * 0.03; ctx.stroke(); ctx.restore();
+      }
     }
 
     // pointer at 12 o'clock
@@ -392,18 +426,56 @@
     ctx.fillStyle = pg; ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = S * 0.025; ctx.fill(); ctx.restore();
   }
 
+  function canTease() {
+    return !reduceMotion && vm && !vm.winner && wheel.slices.length > 1;
+  }
+
+  // The big pulse: a burst of bolts round the rim, and the wheel spins.
+  function startTeaser(now) {
+    var P = window.DrawPool;
+    for (var k = 0; k < 4; k++) spawnBolt(now, 1);
+    var pick = P.pickTeaser(wheel.slices, Math.random);
+    wheel.spin = { from: wheel.turn, to: P.spinTarget(wheel.turn, wheel.slices[pick], Math.random, 2),
+      start: now, dur: 3200, pick: pick };
+    wheel.highlight = -1;
+    $('teaser').classList.remove('on');
+  }
+
+  function endTeaser() {
+    var s = wheel.slices[wheel.spin.pick];
+    wheel.turn = wheel.spin.to;
+    wheel.spin = null;
+    buildBase();                       // re-letter the names upright where it stopped
+    $('teaserName').textContent = s.name;
+    $('teaser').classList.add('on');
+    clearTimeout(wheel.teaserHide);
+    wheel.teaserHide = setTimeout(function () { $('teaser').classList.remove('on'); }, 6500);
+  }
+
   function loopBulbs(now) {
     wheel.raf = 0;
     if (document.hidden || $('wheelbox').hidden) return;
-    if (!nextBolt) nextBolt = now + 1500;
+    // the faint, constant crackle
+    if (!nextBolt) nextBolt = now + 900;
     if (now >= nextBolt) {
-      spawnBolt(now);
-      if (Math.random() < 0.3) setTimeout(function () { spawnBolt(performance.now()); }, 160);  // the odd double strike
-      nextBolt = now + 3500 + Math.random() * 4500;
+      spawnBolt(now, 0.55);
+      if (Math.random() < 0.3) setTimeout(function () { spawnBolt(performance.now(), 0.4); }, 140);
+      nextBolt = now + 1600 + Math.random() * 1600;
     }
-    // ~12 fps is plenty for the bulb chase; lightning needs every frame while it lives
-    if (bolts.length || now - wheel.last >= 80) {
-      wheel.t += (now - (wheel.last || now)) / 400;
+    // the big pulse and the teaser spin
+    if (!wheel.nextPulse) wheel.nextPulse = now + 4000;
+    if (canTease() && !wheel.spin && now >= wheel.nextPulse && now >= wheel.pauseUntil) {
+      startTeaser(now);
+      wheel.nextPulse = now + 10000 + Math.random() * 4000;
+    }
+    if (wheel.spin) {
+      var p = (now - wheel.spin.start) / wheel.spin.dur;
+      wheel.turn = wheel.spin.from + (wheel.spin.to - wheel.spin.from) * window.DrawPool.easeOutCubic(p);
+      if (p >= 1) endTeaser();
+    }
+    // ~12 fps is plenty for the bulb chase; lightning and spins need every frame
+    if (wheel.spin || bolts.length || now - wheel.last >= 80) {
+      wheel.t += ((now - (wheel.last || now)) / 400) * (wheel.spin ? 4 : 1);   // bulbs race while it spins
       wheel.last = now;
       paintWheel(now);
     }
@@ -417,7 +489,9 @@
     wheel.size = Math.round(css * wheel.dpr);
     cv.width = wheel.size; cv.height = wheel.size; cv.style.width = css + 'px';
     wheel.slices = P.wheelSlices(vm.rows);
+    wheel.spin = null;
     wheel.turn = P.restRotation(wheel.slices, vm.winner ? vm.winner.name : null);
+    $('teaserDate').textContent = vm.drawingText;
     buildBase();
     highlightSearch();
     if (!reduceMotion && !wheel.raf) wheel.raf = requestAnimationFrame(loopBulbs);
@@ -485,10 +559,23 @@
   }
   $('wheel').addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') showTip(sliceFromEvent(e), e); });
   $('wheel').addEventListener('pointerleave', function () { $('wheelTip').hidden = true; });
+  // Tapping a wedge selects that player: outlined on the wheel, pinned to the
+  // top of the list (keeping their real place and odds). Tap empty space to clear.
+  function selectSlice(i) {
+    wheel.highlight = i;
+    wheel.selected = i >= 0 ? wheel.slices[i].name : null;
+    wheel.pauseUntil = performance.now() + 20000;   // don't spin away from their pick
+    renderRows();
+    paintWheel();
+  }
   $('wheel').addEventListener('click', function (e) {
+    if (wheel.spin) return;                         // no picking a moving target
     var i = sliceFromEvent(e);
     showTip(i, e);
-    wheel.highlight = i; paintWheel();
+    selectSlice(i);
+    // On a phone the readout would sit over the name just tapped; let it go.
+    clearTimeout(wheel.tipHide);
+    if (e.pointerType !== 'mouse') wheel.tipHide = setTimeout(function () { $('wheelTip').hidden = true; }, 2500);
   });
   window.addEventListener('resize', function () { if (vm && vm.rows.length) drawWheel(); });
   document.addEventListener('visibilitychange', function () {
@@ -498,7 +585,17 @@
   // "Find your username" also finds your slice.
   function highlightSearch() {
     var q = $('find').value.trim().toLowerCase(), callout = $('yourSlice');
-    wheel.highlight = -1; callout.hidden = true;
+    callout.hidden = true;
+    if (!q) {                          // no search: show the tapped selection, if any
+      wheel.highlight = -1;
+      for (var j = 0; wheel.selected && j < wheel.slices.length; j++) {
+        if (wheel.slices[j].name === wheel.selected) { wheel.highlight = j; break; }
+      }
+      if (wheel.base) paintWheel();
+      return;
+    }
+    wheel.highlight = -1;
+    wheel.pauseUntil = performance.now() + 20000;
     if (q) {
       for (var i = 0; i < wheel.slices.length; i++) {
         if (wheel.slices[i].name.toLowerCase().indexOf(q) !== -1) { wheel.highlight = i; break; }
@@ -535,9 +632,17 @@
     show('more', !searching && vm.rows.length > shown);
     if (!searching && vm.rows.length > shown) $('more').textContent = 'Show more (' + (vm.rows.length - shown).toLocaleString() + ' to go)';
     var winnerName = vm.winner ? vm.winner.name : null;
+    // A wedge tapped on the wheel jumps to the top, keeping its place and odds.
+    var pinned = !searching && wheel.selected
+      ? vm.rows.filter(function (r) { return r.name === wheel.selected; })[0] : null;
+    if (pinned) rows = [pinned].concat(rows.filter(function (r) { return r !== pinned; }));
     rows.forEach(function (r) {
       var li = document.createElement('li');
-      li.className = 'row' + (winnerName && r.name === winnerName ? ' is-winner' : '');
+      li.className = 'row' + (winnerName && r.name === winnerName ? ' is-winner' : '') + (r === pinned ? ' pinned' : '');
+      if (r === pinned) {
+        li.title = 'Selected on the wheel. Tap to clear.';
+        li.addEventListener('click', function () { selectSlice(-1); $('wheelTip').hidden = true; });
+      }
       var rank = document.createElement('span'); rank.className = 'rank'; rank.textContent = r.rank;
       var name = document.createElement('span'); name.className = 'name'; name.textContent = r.name; name.title = r.name;
       var count = document.createElement('span'); count.className = 'count';

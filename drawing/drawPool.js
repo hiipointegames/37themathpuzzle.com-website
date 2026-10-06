@@ -240,6 +240,34 @@
     return { main: main, branch: branch };
   }
 
+  // ── The teaser spin ──────────────────────────────────────────────────────
+  // Every so often a lightning pulse spins the wheel and asks "Will the winner
+  // be …?". It is a demonstration, never a draw: the page labels it as a
+  // teaser in the same frame, and it stops once a real winner is recorded.
+  // It picks FAIRLY — a uniformly random angle lands on a slice with
+  // probability equal to that player's share of the entries, exactly the odds
+  // of the real draw — so even the teaser never favours anyone.
+
+  /** A fair teaser pick: index of the slice under a uniformly random angle. */
+  function pickTeaser(slices, rand) {
+    return sliceAt(slices, rand() * Math.PI * 2);
+  }
+
+  /**
+   * Where a spin from `current` must stop so slice `s` rests under the pointer:
+   * always forward (larger turn), at least `extraTurns` full turns, landing in
+   * the slice's middle half so it never stops on a boundary.
+   */
+  function spinTarget(current, s, rand, extraTurns) {
+    var TAU = Math.PI * 2;
+    var a = s.start + (s.end - s.start) * (0.25 + 0.5 * rand());
+    var delta = (((-a - current) % TAU) + TAU) % TAU;
+    return current + delta + TAU * (extraTurns == null ? 2 : extraTurns);
+  }
+
+  /** Ease-out for the spin: fast start, gentle stop. */
+  function easeOutCubic(p) { var q = 1 - Math.max(0, Math.min(1, p)); return 1 - q * q * q; }
+
   /** How many list rows to show: the first page, more on request, all when searching. */
   function visibleRows(rows, shown, query) {
     if (String(query || '').trim()) return filterRows(rows, query);
@@ -325,6 +353,9 @@
     needsLegend: needsLegend,
     bandColor: bandColor,
     rimBolt: rimBolt,
+    pickTeaser: pickTeaser,
+    spinTarget: spinTarget,
+    easeOutCubic: easeOutCubic,
     visibleRows: visibleRows,
     MAX_NAMED: MAX_NAMED,
     restRotation: restRotation,

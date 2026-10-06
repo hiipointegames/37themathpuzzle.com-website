@@ -188,6 +188,37 @@ test('lightning stays on the rim: ends exactly on it, every point within the jit
   assert.strictEqual(P.rimBolt(seeded(3), { ...o, branchChance: 0 }).branch, null);
 });
 
+test('teaser picks are fair: each player lands in proportion to their entries', () => {
+  const s = P.wheelSlices([{ name: 'big', entries: 6 }, { name: 'mid', entries: 3 }, { name: 'small', entries: 1 }]);
+  const rand = seeded(42), hits = [0, 0, 0], N = 20000;
+  for (let i = 0; i < N; i++) hits[P.pickTeaser(s, rand)]++;
+  // expected 60% / 30% / 10%, within 1.5 points
+  assert.ok(Math.abs(hits[0] / N - 0.6) < 0.015, 'big ' + hits[0] / N);
+  assert.ok(Math.abs(hits[1] / N - 0.3) < 0.015, 'mid ' + hits[1] / N);
+  assert.ok(Math.abs(hits[2] / N - 0.1) < 0.015, 'small ' + hits[2] / N);
+});
+
+test('a spin always goes forward, turns at least twice, and stops inside the picked slice', () => {
+  const s = P.wheelSlices([{ name: 'a', entries: 5 }, { name: 'b', entries: 2 }, { name: 'c', entries: 3 }]);
+  const rand = seeded(7), TAU = Math.PI * 2;
+  for (const current of [0, 1.3, -4, 25]) {
+    for (let k = 0; k < 3; k++) {
+      const end = P.spinTarget(current, s[k], rand, 2);
+      assert.ok(end - current >= TAU * 2 && end - current < TAU * 3, 'forward 2+ turns');
+      // at rest, the angle under the pointer (12 o'clock) is -end on the unrotated wheel
+      assert.strictEqual(P.sliceAt(s, -end), k, 'lands on slice ' + k);
+    }
+  }
+});
+
+test('the spin eases out: starts fast, ends at rest, clamps outside 0..1', () => {
+  assert.strictEqual(P.easeOutCubic(0), 0);
+  assert.strictEqual(P.easeOutCubic(1), 1);
+  assert.ok(P.easeOutCubic(0.5) > 0.8);
+  assert.strictEqual(P.easeOutCubic(2), 1);
+  assert.strictEqual(P.easeOutCubic(-1), 0);
+});
+
 test('the list shows a page at a time, but a search covers everyone', () => {
   const rows = P.viewModel({ ...WEEK3, players: BIG }).rows;
   assert.strictEqual(P.visibleRows(rows, 100, '').length, 100);
