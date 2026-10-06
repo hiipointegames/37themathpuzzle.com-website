@@ -219,6 +219,40 @@ test('the spin eases out: starts fast, ends at rest, clamps outside 0..1', () =>
   assert.strictEqual(P.easeOutCubic(-1), 0);
 });
 
+test('flicker index never goes negative (the bug that froze the wheel) nor past the last shape', () => {
+  assert.strictEqual(P.flickerIndex(-12, 3, 110), 0);     // a bolt "from the future" by 12 ms
+  assert.strictEqual(P.flickerIndex(0, 3, 110), 0);
+  assert.strictEqual(P.flickerIndex(150, 3, 110), 1);
+  assert.strictEqual(P.flickerIndex(5000, 3, 110), 2);
+});
+
+test('sky bolts run exactly from start to end, with forks, deterministically', () => {
+  const o = { x0: 100, y0: 0, x1: 300, y1: 600, depth: 6, roughness: 0.22, forks: 3 };
+  const a = P.skyBolt(seeded(5), o), b = P.skyBolt(seeded(5), o);
+  assert.deepStrictEqual(a, b);                               // same seed, same bolt
+  assert.strictEqual(a.length, 4);                            // main + 3 forks
+  const main = a[0];
+  assert.deepStrictEqual(main[0], [100, 0]);
+  assert.deepStrictEqual(main[main.length - 1], [300, 600]);
+  assert.strictEqual(main.length, 65);                        // 2^6 segments
+  assert.ok(main.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y)));
+  assert.strictEqual(P.skyBolt(seeded(5), { ...o, forks: 0 }).length, 1);
+});
+
+test('black hole: opens, swallows the wheel, collapses with a flash, wheel returns whole', () => {
+  const at = (t) => P.blackHolePhase(t);
+  assert.deepStrictEqual(at(0), { wheelScale: 1, wheelAlpha: 1, extraTurn: 0, holeRadius: 0, flash: 0 });
+  assert.ok(at(0.3).wheelScale < 1 && at(0.3).wheelScale > 0);   // spiralling in
+  assert.ok(at(0.3).extraTurn > 0);
+  assert.strictEqual(at(0.55).wheelScale, 0);                     // swallowed
+  assert.ok(at(0.61).flash > 0);                                  // the collapse flashes
+  assert.ok(at(0.8).wheelScale > 0.5 && at(0.8).wheelScale < 1);  // re-emerging
+  assert.ok(at(0.89).wheelScale > 1);                             // bursts out past full size
+  const end = at(1);
+  assert.ok(Math.abs(end.wheelScale - 1) < 1e-9 && end.wheelAlpha === 1 && end.holeRadius === 0 && end.flash === 0);
+  assert.deepStrictEqual(at(-1), at(0));                          // clamped
+});
+
 test('the list shows a page at a time, but a search covers everyone', () => {
   const rows = P.viewModel({ ...WEEK3, players: BIG }).rows;
   assert.strictEqual(P.visibleRows(rows, 100, '').length, 100);

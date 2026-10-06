@@ -240,6 +240,78 @@
     return { main: main, branch: branch };
   }
 
+  /**
+   * Which of a bolt's flicker shapes to show at `age` ms. Clamped at BOTH ends:
+   * a bolt spawned from a timer can carry a timestamp a few ms later than the
+   * animation frame that draws it, so `age` can be negative — and shape -1 was
+   * undefined, which threw inside the animation loop and froze the wheel
+   * (2026-10-05).
+   */
+  function flickerIndex(age, shapes, msPerShape) {
+    return Math.max(0, Math.min(shapes - 1, Math.floor(age / msPerShape)));
+  }
+
+  /**
+   * A sky bolt for the page-wide lightning: a jagged path from (x0,y0) to
+   * (x1,y1) by midpoint displacement, plus a few forks. Pure: pass the random
+   * source. Returns an array of polylines; the first is the main channel and
+   * starts and ends exactly at the given points.
+   */
+  function skyBolt(rand, o) {
+    var depth = o.depth == null ? 6 : o.depth;
+    var rough = o.roughness == null ? 0.22 : o.roughness;
+    function split(a, b, d, off) {
+      if (d === 0) return [a, b];
+      var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      var dx = b[0] - a[0], dy = b[1] - a[1];
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var shift = (rand() * 2 - 1) * off;
+      var m = [mx + (-dy / len) * shift, my + (dx / len) * shift];
+      var left = split(a, m, d - 1, off / 2);
+      return left.concat(split(m, b, d - 1, off / 2).slice(1));
+    }
+    var dist = Math.sqrt(Math.pow(o.x1 - o.x0, 2) + Math.pow(o.y1 - o.y0, 2));
+    var main = split([o.x0, o.y0], [o.x1, o.y1], depth, dist * rough);
+    var paths = [main];
+    var forks = o.forks == null ? 3 : o.forks;
+    for (var f = 0; f < forks; f++) {
+      var at = main[1 + Math.floor(rand() * (main.length - 3))];
+      var ang = Math.atan2(o.y1 - o.y0, o.x1 - o.x0) + (rand() < 0.5 ? -1 : 1) * (0.35 + rand() * 0.6);
+      var flen = dist * (0.12 + rand() * 0.22);
+      paths.push(split(at, [at[0] + Math.cos(ang) * flen, at[1] + Math.sin(ang) * flen], depth - 2, flen * rough));
+    }
+    return paths;
+  }
+
+  /**
+   * The black hole's timeline over `t` = 0..1 of its run: the hole opens, the
+   * wheel spirals in (shrinks, turns faster, fades), the hole collapses with a
+   * flash, and the wheel bursts back out with a small overshoot.
+   * Returns { wheelScale, wheelAlpha, extraTurn, holeRadius (0..1 of the wheel), flash }.
+   */
+  function blackHolePhase(t) {
+    var x = Math.max(0, Math.min(1, t));
+    var ease = function (p) { return p * p * (3 - 2 * p); };
+    if (x < 0.12) {                                 // the hole opens
+      var o = ease(x / 0.12);
+      return { wheelScale: 1, wheelAlpha: 1, extraTurn: 0, holeRadius: 0.35 * o, flash: 0 };
+    }
+    if (x < 0.5) {                                  // the wheel spirals in
+      var s = ease((x - 0.12) / 0.38);
+      return { wheelScale: 1 - s, wheelAlpha: 1 - s * s, extraTurn: s * s * Math.PI * 6,
+        holeRadius: 0.35 + 0.1 * s, flash: 0 };
+    }
+    if (x < 0.62) {                                 // gone; the hole collapses and flashes
+      var c = (x - 0.5) / 0.12;
+      return { wheelScale: 0, wheelAlpha: 0, extraTurn: 0, holeRadius: 0.45 * (1 - ease(c)),
+        flash: c > 0.7 ? (c - 0.7) / 0.3 : 0 };
+    }
+    var b = (x - 0.62) / 0.38;                      // the wheel bursts back out
+    var over = b < 0.7 ? ease(b / 0.7) * 1.08 : 1.08 - 0.08 * ease((b - 0.7) / 0.3);
+    return { wheelScale: over, wheelAlpha: Math.min(1, b * 2.5), extraTurn: (1 - ease(b)) * -Math.PI * 2,
+      holeRadius: 0, flash: b < 0.25 ? 1 - b / 0.25 : 0 };
+  }
+
   // ── The teaser spin ──────────────────────────────────────────────────────
   // Every so often a lightning pulse spins the wheel and asks "Will the winner
   // be …?". It is a demonstration, never a draw: the page labels it as a
@@ -353,6 +425,9 @@
     needsLegend: needsLegend,
     bandColor: bandColor,
     rimBolt: rimBolt,
+    flickerIndex: flickerIndex,
+    skyBolt: skyBolt,
+    blackHolePhase: blackHolePhase,
     pickTeaser: pickTeaser,
     spinTarget: spinTarget,
     easeOutCubic: easeOutCubic,

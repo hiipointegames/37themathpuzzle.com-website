@@ -39,7 +39,8 @@
       radial-gradient(ellipse 60% 45% at 40% 100%, rgba(255,207,58,.09), transparent 72%),
       var(--bg);
   }
-  main{max-width:720px;margin:0 auto;padding-inline:18px;padding-block:28px 64px;display:grid;gap:22px}
+  #sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+  main{position:relative;z-index:1;max-width:720px;margin:0 auto;padding-inline:18px;padding-block:28px 64px;display:grid;gap:22px}
 
   .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font:700 1.05rem 'Fredoka',sans-serif;justify-self:start}
   .brand b{color:var(--gold)}
@@ -136,6 +137,7 @@
 </head>
 <body>
 <div class="cosmos" aria-hidden="true"></div>
+<canvas id="sky" aria-hidden="true"></canvas>
 <main>
   <a class="brand" href="/"><b>37</b> The Math Puzzle</a>
 
@@ -164,8 +166,8 @@
     <canvas id="wheel" width="760" height="760" role="img" aria-label="This week's hat as a wheel"></canvas>
     <span class="wheel-tip" id="wheelTip" hidden></span>
     <p class="teaser" id="teaser" aria-live="polite">
-      <span class="t-q">Will the winner be <b id="teaserName"></b>?</span>
-      <small>Just a teaser. The real draw is live <span id="teaserDate">Sunday</span>.</small>
+      <span class="t-q">Will <b id="teaserName"></b> be this week&rsquo;s winner?</span>
+      <small>Tune in Sunday to find out!</small>
     </p>
     <p class="your-slice" id="yourSlice" hidden aria-live="polite"></p>
     <ol class="legend" id="legend" hidden aria-label="Top players on the wheel"></ol>
@@ -225,15 +227,15 @@
   // see whose it is (and pin them to the top of the list); "Find your username"
   // lights up your slice.
   //
-  // THE TEASER (David, 2026-10-05): lightning crackles faintly along the rim all
-  // the time, and every 10–14 s a big pulse spins the wheel and asks "Will the
-  // winner be …?". Safeguards, so it can never pass for a draw: the pick is FAIR
-  // (a random entry, so big slices win teasers in proportion), the caption says
-  // "just a teaser" in the same frame as the name, it stops for good once a real
-  // winner is recorded, and it pauses 20 s whenever someone taps or searches.
-  // Everything moving is off under reduced motion.
+  // THE TEASER (David, 2026-10-05): the wheel never stops — spin, land, "Will
+  // ___ be this week's winner? Tune in Sunday to find out!", spin again — with
+  // lightning across the whole page and, every 30–60 s, a black hole. Safeguards,
+  // so it can never pass for a draw: every pick is FAIR (a random entry, so big
+  // slices win teasers in proportion), the caption defers to Sunday in the same
+  // frame as the name, it stops for good once a real winner is recorded, a tap or
+  // search halts it for 8 s, and nothing moves under reduced motion.
   var wheel = { slices: [], turn: 0, baseTurn: 0, base: null, size: 0, dpr: 1, highlight: -1, raf: 0, t: 0, last: 0,
-    spin: null, selected: null, pauseUntil: 0, nextPulse: 0 };
+    spin: null, hole: null, holdUntil: 0, nextHole: 0, selected: null, pauseUntil: 0 };
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Lightning lives on the rim only, never a slice or the pointer.
   var bolts = [], nextBolt = 0;
@@ -252,7 +254,7 @@
     bolts.forEach(function (b) {
       var age = now - b.born, life = age / b.life;
       var alpha = (life < 0.12 ? 1 : Math.max(0, 1 - (life - 0.12) / 0.88)) * b.intensity;
-      var path = b.paths[Math.min(2, Math.floor(age / 110))];
+      var path = b.paths[window.DrawPool.flickerIndex(age, 3, 110)];
       flash = Math.max(flash, alpha);
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       [[S * 0.014, 'rgba(31,240,255,' + (0.22 * alpha) + ')', S * 0.04],
@@ -365,9 +367,10 @@
     wheel.base = off;
   }
 
-  // Composite the still wheel with what moves (bulbs) and what's chosen (highlight).
-  function paintWheel(now) {
-    var cv = $('wheel'), ctx = cv.getContext('2d'), g = wheelGeom(), S = g.S, C = g.C, R = g.R;
+  // Composite the still wheel with what moves (bulbs, rim lightning) and what's
+  // chosen (highlight) onto any 2D context the size of the wheel canvas.
+  function paintWheelTo(ctx, now) {
+    var g = wheelGeom(), S = g.S, C = g.C, R = g.R;
     ctx.clearRect(0, 0, S, S);
     if (wheel.base) {
       // During a spin the still picture is turned as one image: cheap at any
@@ -377,14 +380,14 @@
     }
 
     // lightning on the rim, and the rim's glow flaring with it
-    var flash = reduceMotion ? 0 : drawBolts(ctx, now || performance.now());
+    var flash = reduceMotion ? 0 : drawBolts(ctx, now);
     if (flash > 0) {
       ctx.save(); ctx.beginPath(); ctx.arc(C, C, R + S * 0.05, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(31,240,255,' + (0.5 * flash) + ')'; ctx.lineWidth = S * 0.006;
-      ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = S * 0.06 * flash; ctx.stroke(); ctx.restore();
+      ctx.strokeStyle = 'rgba(31,240,255,' + (0.6 * flash) + ')'; ctx.lineWidth = S * 0.008;
+      ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = S * 0.08 * flash; ctx.stroke(); ctx.restore();
     }
 
-    // rim bulbs: a slow chase, every third lit
+    // rim bulbs: a chase, every third lit
     var n = 30, ring = R + S * 0.025, step = reduceMotion ? 0 : Math.floor(wheel.t);
     for (var i = 0; i < n; i++) {
       var a = g.TOP + (i / n) * Math.PI * 2;
@@ -395,20 +398,17 @@
       ctx.fill(); ctx.shadowBlur = 0;
     }
 
-    // the searched / tapped slice
+    // the searched / tapped slice: a glowing outline, nothing across the name
     var h = wheel.slices[wheel.highlight];
     if (h) {
       ctx.save();
-      // keep the highlight off the hub, so it never crosses the entry count
       ctx.beginPath(); ctx.arc(C, C, R + S * 0.06, 0, Math.PI * 2); ctx.arc(C, C, R * 0.25, 0, Math.PI * 2, true); ctx.clip();
       ctx.beginPath(); ctx.moveTo(C, C);
       ctx.arc(C, C, R, g.TOP + h.start + wheel.turn, g.TOP + h.end + wheel.turn); ctx.closePath();
       ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
       ctx.strokeStyle = '#ffffff'; ctx.lineWidth = S * 0.006; ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = S * 0.03; ctx.stroke();
       ctx.restore();
-      // A slice too thin to show its outline gets a glowing tick OUTSIDE the
-      // rim instead — nothing is ever drawn across a name.
-      if ((h.end - h.start) * R < S * 0.012) {
+      if ((h.end - h.start) * R < S * 0.012) {     // too thin to outline: a tick OUTSIDE the rim
         var mid = g.TOP + (h.start + h.end) / 2 + wheel.turn;
         ctx.save(); ctx.beginPath();
         ctx.moveTo(C + Math.cos(mid) * (R + S * 0.056), C + Math.sin(mid) * (R + S * 0.056));
@@ -426,14 +426,156 @@
     ctx.fillStyle = pg; ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = S * 0.025; ctx.fill(); ctx.restore();
   }
 
+  // The wheel canvas. Normally the wheel straight; during a black hole, the
+  // wheel drawn off-screen and then fed into the hole.
+  var frame = document.createElement('canvas');
+  function paintWheel(now) {
+    now = now || performance.now();
+    var cv = $('wheel'), ctx = cv.getContext('2d');
+    if (!wheel.hole) { paintWheelTo(ctx, now); return; }
+
+    var P = window.DrawPool, g = wheelGeom(), S = g.S, C = g.C, R = g.R;
+    var ph = P.blackHolePhase((now - wheel.hole.start) / wheel.hole.dur);
+    if (frame.width !== S) { frame.width = S; frame.height = S; }
+    paintWheelTo(frame.getContext('2d'), now);
+    ctx.clearRect(0, 0, S, S);
+
+    var hr = ph.holeRadius * R * 2.2;               // the hole's reach, in canvas px
+    if (hr > 1) {                                   // the accretion disk: hot, swirling, behind everything
+      ctx.save(); ctx.translate(C, C); ctx.globalCompositeOperation = 'lighter';
+      var spinT = now / 1000;
+      for (var k = 0; k < 42; k++) {
+        var rr = hr * (0.55 + 0.55 * ((k * 0.618) % 1));
+        var st = k * 2.4 + spinT * (3.2 - rr / hr * 1.6);
+        var hue = 330 - 70 * ((k * 0.382) % 1);
+        ctx.beginPath(); ctx.arc(0, 0, rr, st, st + 0.7 + ((k * 0.73) % 1));
+        ctx.strokeStyle = 'hsla(' + hue + ',100%,' + (55 + 15 * ((k * 0.21) % 1)) + '%,0.55)';
+        ctx.lineWidth = S * 0.006; ctx.shadowColor = 'hsl(' + hue + ',100%,60%)'; ctx.shadowBlur = S * 0.02;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    if (ph.wheelScale > 0.001 && ph.wheelAlpha > 0) { // the wheel, spiralling in or bursting out
+      ctx.save(); ctx.globalAlpha = ph.wheelAlpha;
+      ctx.translate(C, C); ctx.rotate(ph.extraTurn); ctx.scale(ph.wheelScale, ph.wheelScale); ctx.translate(-C, -C);
+      ctx.drawImage(frame, 0, 0); ctx.restore();
+    }
+
+    if (hr > 1) {                                   // the event horizon: pure black, with a lensing rim
+      var core = hr * 0.5;
+      var lens = ctx.createRadialGradient(C, C, core * 0.9, C, C, core * 1.45);
+      lens.addColorStop(0, 'rgba(0,0,0,1)'); lens.addColorStop(0.55, 'rgba(255,190,120,.55)'); lens.addColorStop(1, 'rgba(255,120,200,0)');
+      ctx.beginPath(); ctx.arc(C, C, core * 1.45, 0, Math.PI * 2); ctx.fillStyle = lens; ctx.fill();
+      ctx.beginPath(); ctx.arc(C, C, core, 0, Math.PI * 2); ctx.fillStyle = '#000'; ctx.fill();
+    }
+
+    if (ph.flash > 0) {                             // collapse / rebirth flash, kept dim (photosensitivity)
+      var fl = ctx.createRadialGradient(C, C, 0, C, C, R * 1.2);
+      fl.addColorStop(0, 'rgba(255,255,255,' + (0.85 * ph.flash) + ')'); fl.addColorStop(1, 'rgba(160,240,255,0)');
+      ctx.fillStyle = fl; ctx.fillRect(0, 0, S, S);
+      skyFlash(0.5 * ph.flash);
+    }
+  }
+
+  // ── PAGE-WIDE LIGHTNING ────────────────────────────────────────────────────
+  // Drawn on a full-window canvas BEHIND the page content (it never covers
+  // text). Strikes on the wheel end on its RIM, never a slice or the pointer.
+  // Flashes stay dim and seconds apart — far under the 3-per-second limit for
+  // photosensitive viewers — and nothing runs under reduced motion.
+  var sky = $('sky'), skyCtx = sky.getContext('2d'), skyBolts = [], skyDpr = 1, nextSkyBolt = 0, skyDirty = false;
+  function sizeSky() {
+    skyDpr = Math.min(window.devicePixelRatio || 1, 2);
+    sky.width = Math.round(innerWidth * skyDpr); sky.height = Math.round(innerHeight * skyDpr);
+  }
+  var flashLevel = 0;
+  function skyFlash(level) { flashLevel = Math.max(flashLevel, Math.min(0.26, level)); }
+
+  // Real lightning re-strikes: the channel blinks out and back a couple of
+  // times before it fades. Only the bolt flickers — the sky's flash stays one
+  // soft pulse, because rapid full-screen flicker is a seizure risk.
+  function strikeAlpha(age, life) {
+    if (age < 0) return 1;
+    if (age < 70) return 1;
+    if (age < 120) return 0.15;
+    if (age < 200) return 1;
+    if (age < 250) return 0.3;
+    if (age < 320) return 0.9;
+    return Math.max(0, 0.9 * (1 - (age - 320) / (life - 320)));
+  }
+
+  // A bolt from above the window down to `to` (viewport px), or to a random spot.
+  function spawnSkyBolt(now, to, intensity) {
+    var P = window.DrawPool, x1, y1;
+    if (to) { x1 = to[0]; y1 = to[1]; }
+    else { x1 = innerWidth * (0.1 + 0.8 * Math.random()); y1 = innerHeight * (0.35 + 0.4 * Math.random()); }
+    var x0 = x1 + (Math.random() * 2 - 1) * Math.min(320, innerWidth * 0.35), y0 = -30;
+    var shapes = [];
+    for (var k = 0; k < 3; k++) {
+      shapes.push(P.skyBolt(Math.random, { x0: x0 * skyDpr, y0: y0 * skyDpr, x1: x1 * skyDpr, y1: y1 * skyDpr,
+        depth: 7, roughness: 0.2, forks: 2 + Math.floor(Math.random() * 3) }));
+    }
+    skyBolts.push({ born: now, life: 900, shapes: shapes, intensity: intensity });
+    skyFlash(0.24 * intensity);
+  }
+
+  // A strike on the wheel's rim: a random point on its upper arc, in viewport px.
+  function rimTarget() {
+    var cv = $('wheel'), r = cv.getBoundingClientRect(), g = wheelGeom();
+    if (r.bottom < 0 || r.top > innerHeight) return null;   // wheel scrolled away: strike the sky
+    var a = -Math.PI / 2 + (Math.random() * 2 - 1) * 1.1;
+    var rim = (g.R + g.S * 0.05) / g.S;
+    return [r.left + r.width * (0.5 + Math.cos(a) * rim), r.top + r.height * (0.5 + Math.sin(a) * rim)];
+  }
+
+  function paintSky(now) {
+    var P = window.DrawPool;
+    skyBolts = skyBolts.filter(function (b) { return now - b.born < b.life; });
+    if (!skyBolts.length && !skyDirty && flashLevel <= 0) return;
+    skyCtx.clearRect(0, 0, sky.width, sky.height);
+    skyDirty = skyBolts.length > 0;
+    if (flashLevel > 0) {                           // the whole sky lights up, briefly and softly
+      var gl = skyCtx.createRadialGradient(sky.width / 2, 0, 0, sky.width / 2, 0, sky.height * 1.1);
+      gl.addColorStop(0, 'rgba(190,240,255,' + flashLevel + ')'); gl.addColorStop(1, 'rgba(120,80,255,0)');
+      skyCtx.fillStyle = gl; skyCtx.fillRect(0, 0, sky.width, sky.height);
+      flashLevel = Math.max(0, flashLevel - 0.012);
+      skyDirty = true;
+    }
+    skyBolts.forEach(function (b) {
+      var age = now - b.born;
+      var alpha = strikeAlpha(age, b.life) * b.intensity;
+      var paths = b.shapes[P.flickerIndex(age, 3, 110)];
+      skyCtx.save(); skyCtx.globalCompositeOperation = 'lighter'; skyCtx.lineJoin = 'round'; skyCtx.lineCap = 'round';
+      paths.forEach(function (pts, pi) {
+        var w = pi === 0 ? 1 : 0.5;                 // forks are thinner than the main channel
+        [[26 * w, 'rgba(120,200,255,' + (0.10 * alpha) + ')', 60],   // wide atmospheric glow
+         [12 * w, 'rgba(31,240,255,' + (0.28 * alpha) + ')', 30],
+         [6 * w, 'rgba(190,120,255,' + (0.65 * alpha) + ')', 14],
+         [3 * w, 'rgba(255,255,255,' + alpha + ')', 8]].forEach(function (pass) {   // white-hot core
+          skyCtx.lineWidth = pass[0] * skyDpr; skyCtx.strokeStyle = pass[1];
+          skyCtx.shadowColor = '#9ff8ff'; skyCtx.shadowBlur = pass[2] * skyDpr;
+          skyCtx.beginPath(); skyCtx.moveTo(pts[0][0], pts[0][1]);
+          for (var i = 1; i < pts.length; i++) skyCtx.lineTo(pts[i][0], pts[i][1]);
+          skyCtx.stroke();
+        });
+      });
+      skyCtx.restore();
+    });
+  }
+
+  // ── THE ENDLESS TEASER ─────────────────────────────────────────────────────
+  // spin (lightning strikes as it starts) → land → "Will ___ be this week's
+  // winner? Tune in Sunday to find out!" → spin again. Every 30–60 s the wheel
+  // falls into a black hole instead, and comes back. Never once a real winner
+  // is recorded; paused 8 s after a tap or search.
   function canTease() {
     return !reduceMotion && vm && !vm.winner && wheel.slices.length > 1;
   }
 
-  // The big pulse: a burst of bolts round the rim, and the wheel spins.
-  function startTeaser(now) {
+  function startSpin(now) {
     var P = window.DrawPool;
-    for (var k = 0; k < 4; k++) spawnBolt(now, 1);
+    for (var k = 0; k < 3; k++) spawnBolt(now, 1);
+    spawnSkyBolt(now, rimTarget(), 1);
     var pick = P.pickTeaser(wheel.slices, Math.random);
     wheel.spin = { from: wheel.turn, to: P.spinTarget(wheel.turn, wheel.slices[pick], Math.random, 2),
       start: now, dur: 3200, pick: pick };
@@ -441,45 +583,80 @@
     $('teaser').classList.remove('on');
   }
 
-  function endTeaser() {
+  function landSpin(now) {
     var s = wheel.slices[wheel.spin.pick];
     wheel.turn = wheel.spin.to;
     wheel.spin = null;
-    buildBase();                       // re-letter the names upright where it stopped
+    buildBase();                                    // re-letter the names upright where it stopped
     $('teaserName').textContent = s.name;
     $('teaser').classList.add('on');
-    clearTimeout(wheel.teaserHide);
-    wheel.teaserHide = setTimeout(function () { $('teaser').classList.remove('on'); }, 6500);
+    wheel.holdUntil = now + 2800;
   }
 
-  function loopBulbs(now) {
-    wheel.raf = 0;
-    if (document.hidden || $('wheelbox').hidden) return;
-    // the faint, constant crackle
+  // Stop where it is (a tap or a search wants the wheel still).
+  function haltSpin() {
+    if (!wheel.spin) return;
+    wheel.spin = null;
+    buildBase();
+    $('teaser').classList.remove('on');
+  }
+
+  function tick(now) {
+    // faint, constant crackle on the rim
     if (!nextBolt) nextBolt = now + 900;
     if (now >= nextBolt) {
       spawnBolt(now, 0.55);
       if (Math.random() < 0.3) setTimeout(function () { spawnBolt(performance.now(), 0.4); }, 140);
       nextBolt = now + 1600 + Math.random() * 1600;
     }
-    // the big pulse and the teaser spin
-    if (!wheel.nextPulse) wheel.nextPulse = now + 4000;
-    if (canTease() && !wheel.spin && now >= wheel.nextPulse && now >= wheel.pauseUntil) {
-      startTeaser(now);
-      wheel.nextPulse = now + 10000 + Math.random() * 4000;
+    // sky bolts between the big strikes
+    if (!nextSkyBolt) nextSkyBolt = now + 2500;
+    if (now >= nextSkyBolt) {
+      spawnSkyBolt(now, Math.random() < 0.35 ? rimTarget() : null, 0.75);
+      nextSkyBolt = now + 2600 + Math.random() * 3400;
     }
-    if (wheel.spin) {
-      var p = (now - wheel.spin.start) / wheel.spin.dur;
-      wheel.turn = wheel.spin.from + (wheel.spin.to - wheel.spin.from) * window.DrawPool.easeOutCubic(p);
-      if (p >= 1) endTeaser();
+
+    if (canTease()) {
+      if (!wheel.nextHole) wheel.nextHole = now + 30000 + Math.random() * 30000;
+      if (wheel.hole) {
+        if (now - wheel.hole.start >= wheel.hole.dur) { wheel.hole = null; startSpin(now); }
+      } else if (wheel.spin) {
+        var p = (now - wheel.spin.start) / wheel.spin.dur;
+        wheel.turn = wheel.spin.from + (wheel.spin.to - wheel.spin.from) * window.DrawPool.easeOutCubic(p);
+        if (p >= 1) landSpin(now);
+      } else if (now >= wheel.pauseUntil && now >= (wheel.holdUntil || 0)) {
+        if (now >= wheel.nextHole) {
+          $('teaser').classList.remove('on');
+          wheel.hole = { start: now, dur: 4200 };
+          wheel.nextHole = now + 30000 + Math.random() * 30000;
+          spawnSkyBolt(now, rimTarget(), 1);
+        } else {
+          startSpin(now);
+        }
+      }
     }
-    // ~12 fps is plenty for the bulb chase; lightning and spins need every frame
-    if (wheel.spin || bolts.length || now - wheel.last >= 80) {
+
+    var busy = wheel.spin || wheel.hole || bolts.length;
+    if (busy || now - wheel.last >= 80) {
       wheel.t += ((now - (wheel.last || now)) / 400) * (wheel.spin ? 4 : 1);   // bulbs race while it spins
       wheel.last = now;
       paintWheel(now);
     }
-    wheel.raf = requestAnimationFrame(loopBulbs);
+    paintSky(now);
+  }
+
+  // One animation loop. It books its next frame BEFORE drawing this one, so a
+  // single bad frame can never freeze the wheel again (2026-10-05).
+  function loop(now) {
+    wheel.raf = 0;
+    if (document.hidden || $('wheelbox').hidden) return;
+    wheel.raf = requestAnimationFrame(loop);
+    try { tick(now); } catch (err) {        // skip this frame, keep the show going, report once
+      if (!loop.reported) { loop.reported = true; console.error(err); }
+    }
+  }
+  function startLoop() {
+    if (!reduceMotion && !wheel.raf) wheel.raf = requestAnimationFrame(loop);
   }
 
   function drawWheel() {
@@ -489,12 +666,11 @@
     wheel.size = Math.round(css * wheel.dpr);
     cv.width = wheel.size; cv.height = wheel.size; cv.style.width = css + 'px';
     wheel.slices = P.wheelSlices(vm.rows);
-    wheel.spin = null;
+    wheel.spin = null; wheel.hole = null;
     wheel.turn = P.restRotation(wheel.slices, vm.winner ? vm.winner.name : null);
-    $('teaserDate').textContent = vm.drawingText;
     buildBase();
     highlightSearch();
-    if (!reduceMotion && !wheel.raf) wheel.raf = requestAnimationFrame(loopBulbs);
+    startLoop();
 
     // Legend: when the top players' slices are too thin for their names.
     var legend = $('legend');
@@ -564,12 +740,13 @@
   function selectSlice(i) {
     wheel.highlight = i;
     wheel.selected = i >= 0 ? wheel.slices[i].name : null;
-    wheel.pauseUntil = performance.now() + 20000;   // don't spin away from their pick
+    wheel.pauseUntil = performance.now() + 8000;    // don't spin away from their pick
     renderRows();
     paintWheel();
   }
   $('wheel').addEventListener('click', function (e) {
-    if (wheel.spin) return;                         // no picking a moving target
+    if (wheel.hole) return;                         // nothing to pick inside a black hole
+    haltSpin();                                     // stop it where it is
     var i = sliceFromEvent(e);
     showTip(i, e);
     selectSlice(i);
@@ -577,9 +754,10 @@
     clearTimeout(wheel.tipHide);
     if (e.pointerType !== 'mouse') wheel.tipHide = setTimeout(function () { $('wheelTip').hidden = true; }, 2500);
   });
-  window.addEventListener('resize', function () { if (vm && vm.rows.length) drawWheel(); });
+  sizeSky();
+  window.addEventListener('resize', function () { sizeSky(); if (vm && vm.rows.length) drawWheel(); });
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && vm && vm.rows.length && !reduceMotion && !wheel.raf) wheel.raf = requestAnimationFrame(loopBulbs);
+    if (!document.hidden && vm && vm.rows.length) startLoop();
   });
 
   // "Find your username" also finds your slice.
@@ -595,7 +773,8 @@
       return;
     }
     wheel.highlight = -1;
-    wheel.pauseUntil = performance.now() + 20000;
+    haltSpin();
+    wheel.pauseUntil = performance.now() + 8000;
     if (q) {
       for (var i = 0; i < wheel.slices.length; i++) {
         if (wheel.slices[i].name.toLowerCase().indexOf(q) !== -1) { wheel.highlight = i; break; }
