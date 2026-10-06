@@ -969,6 +969,28 @@
       background:rgba(255,255,255,.05)}
     .jump-nav .jump-play{color:var(--gold);border-color:rgba(245,200,75,.45)}
     .jump-nav .jump-play:hover{background:rgba(245,200,75,.12);color:var(--gold-bright)}
+    /* This week's $37 drawing: the one pill that should catch the eye. */
+    .jump-nav .jump-drawing{color:#fff;font-weight:600;border-color:rgba(255,43,208,.75);
+      background:linear-gradient(95deg,rgba(255,43,208,.28),rgba(177,59,255,.28));
+      box-shadow:0 0 14px rgba(255,43,208,.35);display:inline-flex;align-items:center;gap:7px}
+    .jump-nav .jump-drawing:hover{background:linear-gradient(95deg,rgba(255,43,208,.42),rgba(177,59,255,.42));
+      border-color:#ff2bd0;color:#fff}
+    .live-dot{width:8px;height:8px;border-radius:50%;background:#ff2bd0;box-shadow:0 0 0 0 rgba(255,43,208,.7);
+      animation:livePulse 1.8s ease-out infinite;flex:none}
+    @keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(255,43,208,.7)}100%{box-shadow:0 0 0 9px rgba(255,43,208,0)}}
+    /* The hero's live card for the drawing. Works as a plain link with no JS. */
+    .draw-card{display:grid;gap:4px;margin-top:16px;padding:14px 18px;border-radius:16px;text-decoration:none;
+      color:var(--ink);border:1px solid rgba(255,43,208,.6);
+      background:radial-gradient(ellipse at 0% 0%,rgba(255,43,208,.22),transparent 60%),
+        radial-gradient(ellipse at 100% 100%,rgba(177,59,255,.22),transparent 60%),rgba(12,8,30,.85);
+      box-shadow:0 0 24px rgba(255,43,208,.22);transition:transform .2s,box-shadow .2s}
+    .draw-card:hover{transform:translateY(-2px);box-shadow:0 0 32px rgba(255,43,208,.4)}
+    .draw-card:focus-visible{outline:2px solid #ff2bd0;outline-offset:3px}
+    .draw-card .dc-eyebrow{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:600;
+      letter-spacing:.12em;text-transform:uppercase;color:#ff7ae6}
+    .draw-card .dc-stats{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.12rem;line-height:1.3}
+    .draw-card .dc-cta{font-weight:600;color:var(--gold-bright);font-size:.95rem}
+    @media(prefers-reduced-motion:reduce){.live-dot{animation:none}.draw-card{transition:none}}
     footer .social-row{display:flex;justify-content:center;gap:16px;margin:0 0 18px}
     .updated{text-align:center;color:var(--muted);font-size:.8rem;margin:0 0 12px;opacity:.75}
     @media(max-width:860px){.jump-nav{gap:5px 6px;padding:12px 10px 0}
@@ -1415,6 +1437,7 @@
 
 <a class="skip-link" href="#main">Skip to content</a>
 <nav class="jump-nav" aria-label="Section navigation">
+  <a class="jump-drawing" href="/drawing"><span class="live-dot" aria-hidden="true"></span>This week&#x27;s $37 drawing</a>
   <a href="#prize" data-goto="prize">$37 Prize Rules</a>
   <a href="#how" data-goto="how">How to play</a>
   <a href="#example" data-goto="example">Winning examples</a>
@@ -1459,6 +1482,11 @@
         </a>
       </div>
       <p class="hero-freebie">Free to download. Free to play.</p>
+      <a class="draw-card" href="/drawing" id="drawCard">
+        <span class="dc-eyebrow"><span class="live-dot" aria-hidden="true"></span><span id="dcEyebrow">$37 weekly drawing</span></span>
+        <span class="dc-stats" id="dcStats">Every Daily you finish is an entry. See who&#x27;s in the hat.</span>
+        <span class="dc-cta"><span id="dcCta">See this week&#x27;s drawing</span> &rarr;</span>
+      </a>
       </div>
     </div>
     <div class="phone-stage">
@@ -1504,7 +1532,7 @@
       <div class="rule"><h3>Payment</h3><p>All prizes are paid via Venmo or Zelle, no exceptions, sent directly from HiiPointe Games LLC, the company behind 37 - The Math Puzzle.</p></div><div class="rule"><h3>Taxes</h3><p>Any tax on a prize is the winner’s responsibility. A single prize of this size is far below the level at which we have to report anything, but if the prizes we pay to one winner total <strong>$600 or more in a calendar year</strong>, we are required to collect a completed IRS Form W-9 before paying any further prize, and to report the total to the IRS. We cannot give tax advice.</p></div>
       <div class="rule"><h3>Duration</h3><p>The giveaway runs from Sunday 20 September 2026 through Saturday 27 February 2027, which is 23 full weekly drawings. An extension is possible and would be announced at a later date.</p></div>
       <div class="rule"><h3>Cost to enter</h3><p>None. 37 - The Math Puzzle is free to download and free to play, and no purchase is required to enter or to win (you couldn&rsquo;t buy anything in here if you tried, lol).</p></div>
-      <div class="rule"><h3>Who won</h3><p>Winners are announced on all of our social channels, linked at the bottom of this page. If you would rather ask us directly, email <a href="mailto:contactus@hiipointegames.com">contactus@hiipointegames.com</a> within 60 days of a drawing and we will reply with the winning username for that week. We publish a winner’s username – never their real name, email address or payment details. If you would prefer your username not to be published, tell us and we will withhold it; you can still claim the prize.</p></div><div class="rule"><h3>This week&#x27;s entrants</h3><p>From the drawing of Sunday 11 October 2026, while a drawing week is open we show the username of each entrant and the number of entries they hold at <a href="/draw">37themathpuzzle.com/draw</a>. The list updates once a day, shortly after midnight ET, with the Daily Challenges completed the day before. It shows nothing else about entrants, and after the drawing it shows the winning username. If you would rather be listed as &ldquo;Anonymous entrant&rdquo;, email <a href="mailto:contactus@hiipointegames.com">contactus@hiipointegames.com</a>; your entries still count.</p></div><div class="rule"><h3>Void where prohibited</h3><p>This promotion is void where prohibited or restricted by law, and is subject to all applicable federal, state and local laws. It is open only to residents of the United States who are 18 or older.</p></div><div class="rule"><h3>Sponsor</h3><p>This promotion is sponsored solely by HiiPointe Games LLC. It is not sponsored, endorsed, administered by, or associated with Apple Inc. or Google LLC. Apple is not a sponsor of, and is not responsible for conducting, this promotion.</p></div>
+      <div class="rule"><h3>Who won</h3><p>Winners are announced on all of our social channels, linked at the bottom of this page. If you would rather ask us directly, email <a href="mailto:contactus@hiipointegames.com">contactus@hiipointegames.com</a> within 60 days of a drawing and we will reply with the winning username for that week. We publish a winner’s username – never their real name, email address or payment details. If you would prefer your username not to be published, tell us and we will withhold it; you can still claim the prize.</p></div><div class="rule"><h3>This week&#x27;s entrants</h3><p>From the drawing of Sunday 11 October 2026, while a drawing week is open we show the username of each entrant and the number of entries they hold at <a href="/drawing">37themathpuzzle.com/drawing</a>. The list updates once a day, shortly after midnight ET, with the Daily Challenges completed the day before. It shows nothing else about entrants, and after the drawing it shows the winning username. If you would rather be listed as &ldquo;Anonymous entrant&rdquo;, email <a href="mailto:contactus@hiipointegames.com">contactus@hiipointegames.com</a>; your entries still count.</p></div><div class="rule"><h3>Void where prohibited</h3><p>This promotion is void where prohibited or restricted by law, and is subject to all applicable federal, state and local laws. It is open only to residents of the United States who are 18 or older.</p></div><div class="rule"><h3>Sponsor</h3><p>This promotion is sponsored solely by HiiPointe Games LLC. It is not sponsored, endorsed, administered by, or associated with Apple Inc. or Google LLC. Apple is not a sponsor of, and is not responsible for conducting, this promotion.</p></div>
     </div>
   </div>
 </section></div>
@@ -2351,4 +2379,25 @@
 </script>
 
 
+<script src="/drawing/drawPool.js" defer></script>
+<script>
+// The hero's live drawing card. Fetched after load so it never delays the page;
+// on any failure the card keeps its plain text and still links to /drawing.
+window.addEventListener('load', function () {
+  if (!window.DrawPool || !window.fetch) return;
+  fetch('https://xpruolmmhssfrgqkcfqx.supabase.co/rest/v1/rpc/get_contest_pool', {
+    method: 'POST',
+    headers: { apikey: 'sb_publishable_inh_7hk5qODnKu-fLBGVmw_N4codqp9', 'Content-Type': 'application/json' },
+    body: '{}'
+  })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (pool) {
+      var t = window.DrawPool.cardText(window.DrawPool.viewModel(pool));
+      document.getElementById('dcEyebrow').textContent = t.eyebrow;
+      document.getElementById('dcStats').textContent = t.stats;
+      document.getElementById('dcCta').textContent = t.cta;
+    })
+    .catch(function () {});
+});
+</script>
 </body></html>

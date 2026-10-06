@@ -188,6 +188,26 @@
     return { drawing: k, dateText: shortDate(k), url: safeUrl(videos[k]) };
   }
 
+  // ── The homepage card ────────────────────────────────────────────────────
+  /** What the live card on the homepage says, for each state of the week. */
+  function cardText(vm) {
+    var plural = function (n, one, many) { return n + ' ' + (n === 1 ? one : many); };
+    if (vm.state === 'drawn' && vm.winner) {
+      return { eyebrow: '$37 drawing · ' + vm.drawingText, stats: 'Winner: ' + vm.winner.name, cta: 'See the wheel' };
+    }
+    if (vm.state === 'ended') {
+      return { eyebrow: '$37 weekly drawing', stats: 'The giveaway has ended. Thanks for playing!', cta: 'See the last drawing' };
+    }
+    if (vm.state === 'waiting' || vm.totalEntries === 0) {
+      return { eyebrow: '$37 drawing · ' + vm.drawingText, stats: 'A new week has started. Finish a Daily to get in the hat.', cta: 'See this week’s hat' };
+    }
+    return {
+      eyebrow: '$37 drawing · ' + vm.drawingText,
+      stats: plural(vm.totalEntries, 'entry', 'entries') + ' · ' + plural(vm.playerCount, 'player', 'players') + ' · ' + vm.countdown + ' left',
+      cta: 'See who’s in the hat',
+    };
+  }
+
   /** Rows whose name contains the query, case-insensitively. Empty query: all. */
   function filterRows(rows, query) {
     var q = String(query || '').trim().toLowerCase();
@@ -211,5 +231,6 @@
     restRotation: restRotation,
     videoFor: videoFor,
     lastVideo: lastVideo,
+    cardText: cardText,
   };
 });

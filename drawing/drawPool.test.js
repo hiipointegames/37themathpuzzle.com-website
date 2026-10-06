@@ -145,6 +145,26 @@ test('videos: this drawing, else the latest earlier one; https links only', () =
   assert.strictEqual(P.lastVideo({}, '2026-10-11'), null);
 });
 
+test('homepage card: live week shows entries, players and time left', () => {
+  const vm = P.viewModel(WEEK3, Date.parse('2026-10-07T16:00:00Z'));
+  assert.deepStrictEqual(P.cardText(vm), {
+    eyebrow: '$37 drawing · Sun 11 Oct',
+    stats: '13 entries · 4 players · 4d 9h left',
+    cta: 'See who’s in the hat',
+  });
+  const one = P.viewModel({ ...WEEK3, players: [{ name: 'solo', entries: 1 }] }, Date.parse('2026-10-07T16:00:00Z'));
+  assert.strictEqual(P.cardText(one).stats, '1 entry · 1 player · 4d 9h left');
+});
+
+test('homepage card: waiting, drawn and ended weeks each say the right thing', () => {
+  const waiting = P.viewModel({ ...WEEK3, players: [], daysRecorded: 0 });
+  assert.match(P.cardText(waiting).stats, /new week has started/);
+  const drawn = P.viewModel({ ...WEEK3, winner: { name: 'stutz', ticket: 4, totalEntries: 13 } });
+  assert.deepStrictEqual(P.cardText(drawn), { eyebrow: '$37 drawing · Sun 11 Oct', stats: 'Winner: stutz', cta: 'See the wheel' });
+  const ended = P.viewModel({ ...WEEK3, drawing: '2027-03-07', from: '2027-02-28', to: '2027-03-06', players: [], daysRecorded: 0 });
+  assert.match(P.cardText(ended).stats, /has ended/);
+});
+
 test('search finds a username anywhere in it, ignoring case', () => {
   const rows = P.viewModel(WEEK3).rows;
   assert.deepStrictEqual(P.filterRows(rows, 'LIB').map((r) => r.name), ['libb']);
