@@ -142,17 +142,108 @@
   /** Same golden-angle hues as the drawing wheel, so a player keeps a colour. */
   function hueOf(i) { return (282 + i * 137.508) % 360; }
 
-  /** One contiguous slice per player, sized by entries, in list order. */
-  function wheelSlices(rows) {
+  /**
+   * One contiguous slice per player, sized by entries, in list order (most
+   * entries first). Built for any size of hat: EVERY player keeps their own
+   * slice, so the picture never misstates anyone's share, but only the top
+   * `maxNamed` get a colour and a name. The rest are `named: false` and the
+   * page paints them as a two-tone band — at 3,000 players a 1-entry slice is
+   * thinner than a pixel, and 3,000 hues would be noise.
+   */
+  var MAX_NAMED = 24;
+  function wheelSlices(rows, maxNamed) {
+    var limit = maxNamed == null ? MAX_NAMED : maxNamed;
     var total = rows.reduce(function (s, r) { return s + r.entries; }, 0);
     if (!total) return [];
     var at = 0;
     return rows.map(function (r, i) {
       var sweep = (r.entries / total) * Math.PI * 2;
-      var s = { name: r.name, entries: r.entries, start: at, end: at + sweep, hue: hueOf(i) };
+      var named = i < limit;
+      var s = { name: r.name, entries: r.entries, start: at, end: at + sweep,
+        named: named, hue: named ? hueOf(i) : null, odds: oddsText(r.entries, total) };
       at += sweep;
       return s;
     });
+  }
+
+  /** The players sharing the unnamed band: { players, entries } (zeros if none). */
+  function othersSummary(slices) {
+    var o = { players: 0, entries: 0 };
+    slices.forEach(function (s) { if (!s.named) { o.players += 1; o.entries += s.entries; } });
+    return o;
+  }
+
+  /**
+   * Which slice sits at an angle on the (unrotated) wheel: radians clockwise
+   * from 12 o'clock, any value. Binary search, so a tap on a 3,000-player
+   * wheel costs a dozen comparisons. -1 when there are no slices.
+   */
+  function sliceAt(slices, angle) {
+    if (!slices.length) return -1;
+    var TAU = Math.PI * 2;
+    var a = ((angle % TAU) + TAU) % TAU;
+    var lo = 0, hi = slices.length - 1;
+    while (lo < hi) {
+      var mid = (lo + hi) >> 1;
+      if (a < slices[mid].end) hi = mid; else lo = mid + 1;
+    }
+    return lo;
+  }
+
+  /** Should this slice carry its name on the wheel? Named, and wide enough to read. */
+  function showsLabel(s) { return s.named && (s.end - s.start) >= 0.16; }
+
+  /** True when some named player's slice is too thin for their name: show a legend instead. */
+  function needsLegend(slices) {
+    return slices.some(function (s) { return s.named && !showsLabel(s); });
+  }
+
+  /**
+   * Colour for an unnamed slice: a smooth sweep across the band (violet into
+   * magenta) with a faint alternation so neighbours stay distinct. Two flat
+   * tones shimmer (moiré) once slices are thinner than a pixel; a sweep doesn't.
+   * `frac` is the slice's position through the band, 0..1.
+   */
+  function bandColor(i, frac, dim) {
+    var hue = 262 + 52 * Math.max(0, Math.min(1, frac));
+    var light = (dim ? 14 : 30) + (i % 2 ? 3 : 0);
+    return 'hsl(' + hue.toFixed(1) + ' ' + (dim ? 30 : 62) + '% ' + light + '%)';
+  }
+
+  /**
+   * One lightning arc crawling along the wheel's rim — decoration only, so it
+   * stays ON THE RIM and never strikes a slice or the pointer (a bolt hitting a
+   * player would read as the wheel choosing them). Pure: pass the random source.
+   * Returns { main: [[x,y]…], branch: [[x,y]…] | null }; every point of the main
+   * arc lies within `jitter` of the rim radius, and both ends sit exactly on it.
+   */
+  function rimBolt(rand, o) {
+    var n = o.segments || 14;
+    var start = o.start, span = o.span;
+    var main = [];
+    for (var k = 0; k <= n; k++) {
+      var a = start + (span * k) / n;
+      var off = (k === 0 || k === n) ? 0 : (rand() * 2 - 1) * o.jitter;
+      main.push([o.cx + Math.cos(a) * (o.r + off), o.cy + Math.sin(a) * (o.r + off)]);
+    }
+    var branch = null;
+    if (rand() < (o.branchChance == null ? 0.5 : o.branchChance)) {
+      var from = 2 + Math.floor(rand() * (n - 4));
+      var fa = start + (span * from) / n, dir = rand() < 0.5 ? -1 : 1;
+      branch = [main[from]];
+      for (var j = 1; j <= 4; j++) {
+        var ba = fa + dir * (span / n) * j * 0.8;
+        var br = o.r + (rand() * 2 - 1) * o.jitter;
+        branch.push([o.cx + Math.cos(ba) * br, o.cy + Math.sin(ba) * br]);
+      }
+    }
+    return { main: main, branch: branch };
+  }
+
+  /** How many list rows to show: the first page, more on request, all when searching. */
+  function visibleRows(rows, shown, query) {
+    if (String(query || '').trim()) return filterRows(rows, query);
+    return rows.slice(0, shown);
   }
 
   /**
@@ -228,6 +319,14 @@
     filterRows: filterRows,
     hueOf: hueOf,
     wheelSlices: wheelSlices,
+    othersSummary: othersSummary,
+    sliceAt: sliceAt,
+    showsLabel: showsLabel,
+    needsLegend: needsLegend,
+    bandColor: bandColor,
+    rimBolt: rimBolt,
+    visibleRows: visibleRows,
+    MAX_NAMED: MAX_NAMED,
     restRotation: restRotation,
     videoFor: videoFor,
     lastVideo: lastVideo,

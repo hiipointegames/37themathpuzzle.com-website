@@ -96,8 +96,20 @@
   footer{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:.88rem}
   footer a{color:var(--muted)}
   [hidden]{display:none!important}
-  .wheelbox{display:grid;justify-items:center;gap:10px}
-  .wheelbox canvas{width:min(100%,380px);aspect-ratio:1;display:block}
+  .wheelbox{position:relative;display:grid;justify-items:center;gap:10px}
+  .wheelbox canvas{max-width:100%;aspect-ratio:1;display:block;cursor:pointer;touch-action:manipulation}
+  .wheel-tip{position:absolute;transform:translate(-50%,-100%);pointer-events:none;white-space:nowrap;
+    font:600 .86rem 'Outfit',sans-serif;color:var(--ink);background:rgba(5,3,16,.92);
+    border:1px solid rgba(31,240,255,.5);border-radius:10px;padding:6px 10px;z-index:2}
+  .your-slice{font:600 .95rem 'Outfit',sans-serif;color:var(--cyan);text-align:center}
+  .legend{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;max-width:560px}
+  .legend li{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--ink);min-width:0}
+  .legend i{width:10px;height:10px;border-radius:3px;flex:none}
+  .legend span{max-width:14ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .legend b{font:600 .8rem 'Fredoka',sans-serif;color:var(--muted)}
+  .more{justify-self:center;font:600 .95rem 'Outfit',sans-serif;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:10px 18px;cursor:pointer}
+  .more:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   .wheel-cap{color:var(--muted);font-size:.86rem;text-align:center;max-width:46ch}
   .video{
     justify-self:center;display:inline-flex;align-items:center;gap:8px;text-decoration:none;
@@ -138,6 +150,9 @@
        Sunday, and a page visitors could spin would invite "I won!" screenshots. -->
   <section class="wheelbox" id="wheelbox" hidden>
     <canvas id="wheel" width="760" height="760" role="img" aria-label="This week's hat as a wheel"></canvas>
+    <span class="wheel-tip" id="wheelTip" hidden></span>
+    <p class="your-slice" id="yourSlice" hidden aria-live="polite"></p>
+    <ol class="legend" id="legend" hidden aria-label="Top players on the wheel"></ol>
     <p class="wheel-cap" id="wheelCap">Each slice is one player, sized by their entries. The real wheel is spun live on Sunday.</p>
   </section>
 
@@ -150,6 +165,7 @@
   <input class="find" id="find" type="search" placeholder="Find your username" aria-label="Find your username" autocomplete="off" hidden>
   <ol class="list" id="list" aria-label="Entrants, most entries first"></ol>
   <p class="empty" id="empty" hidden></p>
+  <button class="more" id="more" type="button" hidden>Show more</button>
 
   <section class="how">
     <h2>How it works</h2>
@@ -183,86 +199,317 @@
   var $ = function (id) { return document.getElementById(id); };
   var vm = null;
   var videos = null;   // drawing/videos.json: { "YYYY-MM-DD": "https://…" }
+  var PAGE = 100, shown = PAGE;   // list rows on screen; a search always covers everyone
 
   function show(id, on) { $(id).hidden = !on; }
 
-  // The wheel picture: drawn once per render, never animated.
-  function drawWheel() {
-    var cv = $('wheel');
-    var ctx = cv.getContext('2d');
-    var P = window.DrawPool;
-    var slices = P.wheelSlices(vm.rows);
+  // ── THE WHEEL PICTURE ──────────────────────────────────────────────────────
+  // Built for any size of hat. Every player has their own slice; the top 24 are
+  // coloured and named, the rest share a two-tone band. It NEVER spins: only the
+  // rim bulbs move (a slow chase, off under reduced motion). Tap or hover a slice
+  // to see whose it is; "Find your username" lights up your slice.
+  var wheel = { slices: [], turn: 0, base: null, size: 0, dpr: 1, highlight: -1, raf: 0, t: 0, last: 0 };
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Lightning: a crackle along the rim every few seconds. Rim only, never a
+  // slice or the pointer (a strike on a player would look like the wheel
+  // choosing them). Off under reduced motion.
+  var bolts = [], nextBolt = 0;
+  function spawnBolt(now) {
+    var g = wheelGeom(), P = window.DrawPool, paths = [];
+    var start = Math.random() * Math.PI * 2, span = 0.45 + Math.random() * 0.6;
+    for (var k = 0; k < 3; k++) {          // three shapes in quick succession: a flicker
+      paths.push(P.rimBolt(Math.random, { cx: g.C, cy: g.C, r: g.R + g.S * 0.025, start: start, span: span,
+        jitter: g.S * 0.016, segments: 16, branchChance: 0.55 }));
+    }
+    bolts.push({ born: now, paths: paths });
+  }
+  function drawBolts(ctx, now) {
+    var S = wheel.size, flash = 0;
+    bolts = bolts.filter(function (b) { return now - b.born < 420; });
+    bolts.forEach(function (b) {
+      var age = now - b.born, life = age / 420;
+      var alpha = life < 0.12 ? 1 : Math.max(0, 1 - (life - 0.12) / 0.88);
+      var path = b.paths[Math.min(2, Math.floor(age / 110))];
+      flash = Math.max(flash, alpha);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      [[S * 0.014, 'rgba(31,240,255,' + (0.22 * alpha) + ')', S * 0.04],
+       [S * 0.006, 'rgba(177,59,255,' + (0.7 * alpha) + ')', S * 0.02],
+       [S * 0.0024, 'rgba(255,255,255,' + alpha + ')', 0]].forEach(function (pass) {
+        ctx.lineWidth = pass[0]; ctx.strokeStyle = pass[1];
+        ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = pass[2];
+        [path.main, path.branch].forEach(function (pts) {
+          if (!pts) return;
+          ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+          for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+          ctx.stroke();
+        });
+      });
+      ctx.restore();
+    });
+    return flash;
+  }
+
+  function wheelGeom() {
+    var S = wheel.size;
+    return { S: S, C: S / 2, R: S * 0.40, TOP: -Math.PI / 2 };
+  }
+
+  // Paint everything that doesn't move onto an offscreen canvas, once per data change.
+  function buildBase() {
+    var P = window.DrawPool, g = wheelGeom(), S = g.S, C = g.C, R = g.R;
+    var off = document.createElement('canvas'); off.width = S; off.height = S;
+    var ctx = off.getContext('2d');
     var winner = vm.winner ? vm.winner.name : null;
-    var turn = P.restRotation(slices, winner);
-    var S = cv.width, C = S / 2, R = S * 0.42, TOP = -Math.PI / 2;
-    ctx.clearRect(0, 0, S, S);
+    var slices = wheel.slices, turn = wheel.turn;
+    var firstOther = slices.findIndex(function (s) { return !s.named; });
+    var othersCount = firstOther < 0 ? 0 : slices.length - firstOther;
 
-    // Rim glow
-    ctx.save();
-    ctx.beginPath(); ctx.arc(C, C, R + 10, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(177,59,255,.45)'; ctx.lineWidth = 10;
-    ctx.shadowColor = '#b13bff'; ctx.shadowBlur = 30; ctx.stroke();
-    ctx.restore();
+    // outer rim
+    var rimGrad = ctx.createRadialGradient(C, C, R, C, C, R + S * 0.05);
+    rimGrad.addColorStop(0, '#2a1650'); rimGrad.addColorStop(1, '#120a2a');
+    ctx.beginPath(); ctx.arc(C, C, R + S * 0.05, 0, Math.PI * 2); ctx.fillStyle = rimGrad; ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.arc(C, C, R + S * 0.05, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(177,59,255,.55)'; ctx.lineWidth = S * 0.006;
+    ctx.shadowColor = '#b13bff'; ctx.shadowBlur = S * 0.04; ctx.stroke(); ctx.restore();
 
-    slices.forEach(function (s) {
-      var a0 = TOP + s.start + turn, a1 = TOP + s.end + turn;
+    slices.forEach(function (s, i) {
+      var a0 = g.TOP + s.start + turn, a1 = g.TOP + s.end + turn;
       var dim = winner && s.name !== winner;
       ctx.beginPath(); ctx.moveTo(C, C); ctx.arc(C, C, R, a0, a1); ctx.closePath();
-      ctx.fillStyle = 'hsl(' + s.hue.toFixed(1) + ' 85% ' + (dim ? '24%' : '58%') + ')';
+      if (s.named) {
+        var shade = ctx.createRadialGradient(C, C, R * 0.2, C, C, R);
+        shade.addColorStop(0, 'hsl(' + s.hue.toFixed(1) + ' 80% ' + (dim ? '18%' : '42%') + ')');
+        shade.addColorStop(1, 'hsl(' + s.hue.toFixed(1) + ' 88% ' + (dim ? '26%' : '62%') + ')');
+        ctx.fillStyle = shade;
+      } else {
+        ctx.fillStyle = P.bandColor(i, othersCount > 1 ? (i - firstOther) / (othersCount - 1) : 0, dim);
+      }
       ctx.fill();
-      ctx.strokeStyle = 'rgba(5,3,16,.85)'; ctx.lineWidth = 2; ctx.stroke();
-
-      // Names only where the slice is wide enough to read; the list has the rest.
-      if (s.end - s.start >= 0.2) {
-        var mid = (a0 + a1) / 2;
-        ctx.save();
-        ctx.translate(C, C); ctx.rotate(mid);
-        var flip = Math.cos(mid) < 0;
-        if (flip) ctx.rotate(Math.PI);
-        ctx.fillStyle = dim ? 'rgba(238,234,255,.55)' : '#0b0718';
-        ctx.font = '600 ' + Math.round(S * 0.032) + "px Outfit, system-ui, sans-serif";
-        ctx.textBaseline = 'middle';
-        ctx.textAlign = flip ? 'left' : 'right';
-        // Start inside the pointer's reach (it covers ~34px of the rim at 12
-        // o'clock, exactly where the winner's name rests) and stop short of the hub.
-        var label = s.name, edge = R - 52, maxW = R * 0.5;
-        while (label.length > 2 && ctx.measureText(label).width > maxW) label = label.slice(0, -2) + '…';
-        ctx.fillText(label, flip ? -edge : edge, 0);
-        ctx.restore();
+      // Separators only where they stay visible: named slices, and the band's edge.
+      if (s.named || (slices[i - 1] && slices[i - 1].named)) {
+        ctx.strokeStyle = 'rgba(5,3,16,.9)'; ctx.lineWidth = S * 0.003; ctx.stroke();
       }
     });
 
-    if (winner) {
-      // Gold edge on the winning slice.
-      slices.forEach(function (s) {
-        if (s.name !== winner) return;
-        ctx.beginPath(); ctx.moveTo(C, C); ctx.arc(C, C, R, TOP + s.start + turn, TOP + s.end + turn); ctx.closePath();
-        ctx.strokeStyle = '#ffcf3a'; ctx.lineWidth = 6; ctx.shadowColor = '#ffcf3a'; ctx.shadowBlur = 18; ctx.stroke();
-        ctx.shadowBlur = 0;
+    // names
+    slices.forEach(function (s) {
+      if (!P.showsLabel(s)) return;
+      var dim = winner && s.name !== winner;
+      var mid = g.TOP + (s.start + s.end) / 2 + turn;
+      ctx.save(); ctx.translate(C, C); ctx.rotate(mid);
+      var flip = Math.cos(mid) < 0;
+      if (flip) ctx.rotate(Math.PI);
+      ctx.fillStyle = dim ? 'rgba(238,234,255,.5)' : '#0b0718';
+      ctx.font = '600 ' + Math.round(S * 0.03) + 'px Outfit, system-ui, sans-serif';
+      ctx.textBaseline = 'middle'; ctx.textAlign = flip ? 'left' : 'right';
+      var edge = R - S * 0.065, label = s.name;
+      while (label.length > 2 && ctx.measureText(label).width > R * 0.5) label = label.slice(0, -2) + '…';
+      ctx.fillText(label, flip ? -edge : edge, 0);
+      ctx.restore();
+    });
+
+    // winner edge, plus a gold marker up to the pointer: at thousands of players
+    // the winner's slice can be thinner than a pixel, and must still be seen.
+    slices.forEach(function (s) {
+      if (!winner || s.name !== winner) return;
+      ctx.save(); ctx.beginPath(); ctx.moveTo(C, C);
+      ctx.arc(C, C, R, g.TOP + s.start + turn, g.TOP + s.end + turn); ctx.closePath();
+      ctx.strokeStyle = '#ffcf3a'; ctx.lineWidth = S * 0.008; ctx.shadowColor = '#ffcf3a'; ctx.shadowBlur = S * 0.03; ctx.stroke();
+      var mid = g.TOP + (s.start + s.end) / 2 + turn;
+      ctx.beginPath(); ctx.moveTo(C + Math.cos(mid) * R * 0.25, C + Math.sin(mid) * R * 0.25);
+      ctx.lineTo(C + Math.cos(mid) * R, C + Math.sin(mid) * R);
+      ctx.lineWidth = S * 0.007; ctx.stroke();
+      ctx.restore();
+    });
+
+    // inner shadow ring for depth
+    var depth = ctx.createRadialGradient(C, C, R * 0.82, C, C, R);
+    depth.addColorStop(0, 'rgba(0,0,0,0)'); depth.addColorStop(1, 'rgba(0,0,0,.28)');
+    ctx.beginPath(); ctx.arc(C, C, R, 0, Math.PI * 2); ctx.fillStyle = depth; ctx.fill();
+
+    // hub
+    var hub = ctx.createRadialGradient(C - R * 0.05, C - R * 0.06, R * 0.02, C, C, R * 0.24);
+    hub.addColorStop(0, '#2b1d5c'); hub.addColorStop(1, '#0b0718');
+    ctx.beginPath(); ctx.arc(C, C, R * 0.24, 0, Math.PI * 2); ctx.fillStyle = hub; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,207,58,.65)'; ctx.lineWidth = S * 0.005; ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#ffcf3a';
+    var total = vm.totalEntries.toLocaleString();
+    ctx.font = '700 ' + Math.round(S * (total.length > 4 ? 0.05 : 0.068)) + 'px Fredoka, system-ui, sans-serif';
+    ctx.fillText(total, C, C + S * 0.012);
+    ctx.fillStyle = '#a9a3cc'; ctx.font = '600 ' + Math.round(S * 0.024) + 'px Outfit, system-ui, sans-serif';
+    ctx.fillText('ENTRIES', C, C + S * 0.05);
+    wheel.base = off;
+  }
+
+  // Composite the still wheel with what moves (bulbs) and what's chosen (highlight).
+  function paintWheel(now) {
+    var cv = $('wheel'), ctx = cv.getContext('2d'), g = wheelGeom(), S = g.S, C = g.C, R = g.R;
+    ctx.clearRect(0, 0, S, S);
+    if (wheel.base) ctx.drawImage(wheel.base, 0, 0);
+
+    // lightning on the rim, and the rim's glow flaring with it
+    var flash = reduceMotion ? 0 : drawBolts(ctx, now || performance.now());
+    if (flash > 0) {
+      ctx.save(); ctx.beginPath(); ctx.arc(C, C, R + S * 0.05, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(31,240,255,' + (0.5 * flash) + ')'; ctx.lineWidth = S * 0.006;
+      ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = S * 0.06 * flash; ctx.stroke(); ctx.restore();
+    }
+
+    // rim bulbs: a slow chase, every third lit
+    var n = 30, ring = R + S * 0.025, step = reduceMotion ? 0 : Math.floor(wheel.t);
+    for (var i = 0; i < n; i++) {
+      var a = g.TOP + (i / n) * Math.PI * 2;
+      var lit = (i + step) % 3 === 0;
+      ctx.beginPath(); ctx.arc(C + Math.cos(a) * ring, C + Math.sin(a) * ring, S * (lit ? 0.0085 : 0.007), 0, Math.PI * 2);
+      ctx.fillStyle = lit ? '#ffe58a' : 'rgba(255,207,58,.28)';
+      if (lit) { ctx.shadowColor = '#ffcf3a'; ctx.shadowBlur = S * 0.02; }
+      ctx.fill(); ctx.shadowBlur = 0;
+    }
+
+    // the searched / tapped slice
+    var h = wheel.slices[wheel.highlight];
+    if (h) {
+      ctx.save();
+      // keep the highlight off the hub, so it never crosses the entry count
+      ctx.beginPath(); ctx.arc(C, C, R + S * 0.06, 0, Math.PI * 2); ctx.arc(C, C, R * 0.25, 0, Math.PI * 2, true); ctx.clip();
+      ctx.beginPath(); ctx.moveTo(C, C);
+      ctx.arc(C, C, R, g.TOP + h.start + wheel.turn, g.TOP + h.end + wheel.turn); ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fill();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = S * 0.006; ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = S * 0.03; ctx.stroke();
+      // a marker out to the rim, so even a 1-entry sliver can be found
+      var mid = g.TOP + (h.start + h.end) / 2 + wheel.turn;
+      ctx.beginPath(); ctx.moveTo(C + Math.cos(mid) * (R * 0.3), C + Math.sin(mid) * (R * 0.3));
+      ctx.lineTo(C + Math.cos(mid) * (R + S * 0.045), C + Math.sin(mid) * (R + S * 0.045));
+      ctx.strokeStyle = '#1ff0ff'; ctx.lineWidth = S * 0.005; ctx.stroke();
+      ctx.restore();
+    }
+
+    // pointer at 12 o'clock
+    ctx.save(); ctx.beginPath();
+    ctx.moveTo(C, C - R + S * 0.045); ctx.lineTo(C - S * 0.03, C - R - S * 0.05); ctx.lineTo(C + S * 0.03, C - R - S * 0.05); ctx.closePath();
+    var pg = ctx.createLinearGradient(C, C - R - S * 0.05, C, C - R + S * 0.045);
+    pg.addColorStop(0, '#9ff8ff'); pg.addColorStop(1, '#1ff0ff');
+    ctx.fillStyle = pg; ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = S * 0.025; ctx.fill(); ctx.restore();
+  }
+
+  function loopBulbs(now) {
+    wheel.raf = 0;
+    if (document.hidden || $('wheelbox').hidden) return;
+    if (!nextBolt) nextBolt = now + 1500;
+    if (now >= nextBolt) {
+      spawnBolt(now);
+      if (Math.random() < 0.3) setTimeout(function () { spawnBolt(performance.now()); }, 160);  // the odd double strike
+      nextBolt = now + 3500 + Math.random() * 4500;
+    }
+    // ~12 fps is plenty for the bulb chase; lightning needs every frame while it lives
+    if (bolts.length || now - wheel.last >= 80) {
+      wheel.t += (now - (wheel.last || now)) / 400;
+      wheel.last = now;
+      paintWheel(now);
+    }
+    wheel.raf = requestAnimationFrame(loopBulbs);
+  }
+
+  function drawWheel() {
+    var P = window.DrawPool, cv = $('wheel');
+    var css = Math.min(cv.parentElement.clientWidth || 380, 420);
+    wheel.dpr = Math.min(window.devicePixelRatio || 1, 3);
+    wheel.size = Math.round(css * wheel.dpr);
+    cv.width = wheel.size; cv.height = wheel.size; cv.style.width = css + 'px';
+    wheel.slices = P.wheelSlices(vm.rows);
+    wheel.turn = P.restRotation(wheel.slices, vm.winner ? vm.winner.name : null);
+    buildBase();
+    highlightSearch();
+    if (!reduceMotion && !wheel.raf) wheel.raf = requestAnimationFrame(loopBulbs);
+
+    // Legend: when the top players' slices are too thin for their names.
+    var legend = $('legend');
+    legend.textContent = '';
+    var useLegend = P.needsLegend(wheel.slices);
+    show('legend', useLegend);
+    if (useLegend) {
+      wheel.slices.filter(function (s) { return s.named; }).slice(0, 8).forEach(function (s) {
+        var li = document.createElement('li');
+        var dot = document.createElement('i'); dot.style.background = 'hsl(' + s.hue.toFixed(1) + ' 85% 58%)';
+        var nm = document.createElement('span'); nm.textContent = s.name;
+        var ct = document.createElement('b'); ct.textContent = s.entries;
+        li.append(dot, nm, ct); legend.appendChild(li);
       });
     }
 
-    // Hub
-    ctx.beginPath(); ctx.arc(C, C, R * 0.22, 0, Math.PI * 2);
-    ctx.fillStyle = '#0b0718'; ctx.fill();
-    ctx.strokeStyle = 'rgba(177,59,255,.6)'; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = '#ffcf3a'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.font = '700 ' + Math.round(S * 0.07) + "px Fredoka, system-ui, sans-serif";
-    ctx.fillText(String(vm.totalEntries), C, C + S * 0.012);
-    ctx.fillStyle = '#a9a3cc'; ctx.font = '600 ' + Math.round(S * 0.026) + "px Outfit, system-ui, sans-serif";
-    ctx.fillText('ENTRIES', C, C + S * 0.05);
-
-    // Pointer at 12 o'clock
-    ctx.beginPath();
-    ctx.moveTo(C, C - R + 34); ctx.lineTo(C - 20, C - R - 22); ctx.lineTo(C + 20, C - R - 22); ctx.closePath();
-    ctx.fillStyle = '#1ff0ff'; ctx.shadowColor = '#1ff0ff'; ctx.shadowBlur = 16; ctx.fill(); ctx.shadowBlur = 0;
-
+    var others = P.othersSummary(wheel.slices), named = wheel.slices.length - others.players;
+    var winner = vm.winner ? vm.winner.name : null;
+    $('wheelCap').textContent = (winner ? 'The wheel as it landed on Sunday. ' : '')
+      + (others.players
+        ? 'The top ' + named + ' players are named. ' + others.players.toLocaleString() + ' more share the purple band, each with their own slice. '
+        : 'Each slice is one player, sized by their entries. ')
+      + 'Tap a slice to see whose it is.'
+      + (winner ? '' : ' The real wheel is spun live on Sunday.');
     cv.setAttribute('aria-label', winner
       ? 'Wheel picture of this week\'s hat, resting on the winner, ' + winner + '.'
-      : 'Wheel picture of this week\'s hat: ' + vm.playerCount + ' players, ' + vm.totalEntries + ' entries. Biggest slice: ' + (vm.rows[0] ? vm.rows[0].name : 'none') + '.');
-    $('wheelCap').textContent = winner
-      ? 'The wheel as it landed on Sunday. Each slice is one player, sized by their entries.'
-      : 'Each slice is one player, sized by their entries. The real wheel is spun live on Sunday.';
+      : 'Wheel picture of this week\'s hat: ' + vm.playerCount + ' players, ' + vm.totalEntries + ' entries.');
+  }
+
+  // Tap or hover: whose slice is this?
+  function sliceFromEvent(e) {
+    var cv = $('wheel'), r = cv.getBoundingClientRect(), g = wheelGeom();
+    var x = (e.clientX - r.left) * (g.S / r.width) - g.C, y = (e.clientY - r.top) * (g.S / r.height) - g.C;
+    var dist = Math.sqrt(x * x + y * y);
+    if (dist > g.R || dist < g.R * 0.24) return -1;
+    var angle = Math.atan2(y, x) - g.TOP - wheel.turn;
+    // A fingertip covers several slivers. Within ~8 screen px of the winner,
+    // the tap means the winner — never a neighbour's name under the pointer.
+    var finger = (8 * wheel.dpr) / dist;
+    if (vm && vm.winner) {
+      for (var w = 0; w < wheel.slices.length; w++) {
+        var ws = wheel.slices[w];
+        if (ws.name !== vm.winner.name) continue;
+        var a = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+        if (a >= ws.start - finger && a <= ws.end + finger) return w;
+      }
+    }
+    var i = window.DrawPool.sliceAt(wheel.slices, angle);
+    wheel.tapTiny = i >= 0 && (wheel.slices[i].end - wheel.slices[i].start) * dist < 6 * wheel.dpr;
+    return i;
+  }
+  function showTip(i, e) {
+    var tip = $('wheelTip'), s = wheel.slices[i];
+    if (!s) { tip.hidden = true; return; }
+    var isWinner = vm.winner && s.name === vm.winner.name;
+    tip.textContent = (isWinner ? 'Winner: ' : '') + s.name + ' · ' + s.entries + (s.entries === 1 ? ' entry' : ' entries') + ' · ' + s.odds
+      + (!isWinner && wheel.tapTiny ? ' (tiny slice: search your username to find yours)' : '');
+    var box = $('wheelbox').getBoundingClientRect();
+    tip.style.left = Math.max(8, Math.min(box.width - 8, e.clientX - box.left)) + 'px';
+    tip.style.top = (e.clientY - box.top - 14) + 'px';
+    tip.hidden = false;
+  }
+  $('wheel').addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') showTip(sliceFromEvent(e), e); });
+  $('wheel').addEventListener('pointerleave', function () { $('wheelTip').hidden = true; });
+  $('wheel').addEventListener('click', function (e) {
+    var i = sliceFromEvent(e);
+    showTip(i, e);
+    wheel.highlight = i; paintWheel();
+  });
+  window.addEventListener('resize', function () { if (vm && vm.rows.length) drawWheel(); });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && vm && vm.rows.length && !reduceMotion && !wheel.raf) wheel.raf = requestAnimationFrame(loopBulbs);
+  });
+
+  // "Find your username" also finds your slice.
+  function highlightSearch() {
+    var q = $('find').value.trim().toLowerCase(), callout = $('yourSlice');
+    wheel.highlight = -1; callout.hidden = true;
+    if (q) {
+      for (var i = 0; i < wheel.slices.length; i++) {
+        if (wheel.slices[i].name.toLowerCase().indexOf(q) !== -1) { wheel.highlight = i; break; }
+      }
+      var s = wheel.slices[wheel.highlight];
+      if (s) {
+        callout.textContent = 'Slice found: ' + s.name + ' · ' + s.entries + (s.entries === 1 ? ' entry' : ' entries') + ' · ' + s.odds + ' chance';
+        callout.hidden = false;
+      }
+    }
+    if (wheel.base) paintWheel();
   }
 
   function renderVideos() {
@@ -283,7 +530,10 @@
     var list = $('list');
     list.textContent = '';
     if (!vm) return;
-    var rows = window.DrawPool.filterRows(vm.rows, $('find').value);
+    var rows = window.DrawPool.visibleRows(vm.rows, shown, $('find').value);
+    var searching = $('find').value.trim() !== '';
+    show('more', !searching && vm.rows.length > shown);
+    if (!searching && vm.rows.length > shown) $('more').textContent = 'Show more (' + (vm.rows.length - shown).toLocaleString() + ' to go)';
     var winnerName = vm.winner ? vm.winner.name : null;
     rows.forEach(function (r) {
       var li = document.createElement('li');
@@ -354,7 +604,7 @@
       .catch(function () {
         $('range').textContent = '';
         show('stats', false); show('winner', false); show('updated', false); show('find', false);
-        show('wheelbox', false);
+        show('wheelbox', false); show('more', false);
         show('error', true); show('retry', true);
       });
   }
@@ -370,7 +620,8 @@
     .then(function (v) { videos = v; renderVideos(); })
     .catch(function () {});
 
-  $('find').addEventListener('input', renderRows);
+  $('find').addEventListener('input', function () { renderRows(); highlightSearch(); });
+  $('more').addEventListener('click', function () { shown += PAGE; renderRows(); });
   $('retry').addEventListener('click', load);
   // Keep the countdown honest while the page stays open.
   setInterval(function () {

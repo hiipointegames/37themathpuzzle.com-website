@@ -121,6 +121,80 @@ test('wheel slices are contiguous, sized by entries, and close the circle', () =
   assert.strictEqual(s[0].hue, P.hueOf(0));
 });
 
+// A hat the size the giveaway is growing towards: 2,000 players, most with 1–3 entries.
+const BIG = Array.from({ length: 2000 }, (_, i) => ({ name: 'p' + i, entries: i < 30 ? 21 - Math.floor(i / 2) : 1 + (i % 3) }))
+  .sort((a, b) => b.entries - a.entries);
+
+test('every player keeps a slice, but only the top 24 are named and coloured', () => {
+  const s = P.wheelSlices(BIG);
+  assert.strictEqual(s.length, 2000);
+  assert.strictEqual(s.filter((x) => x.named).length, P.MAX_NAMED);
+  assert.ok(s.slice(0, 24).every((x) => x.named && x.hue !== null));
+  assert.ok(s.slice(24).every((x) => !x.named && x.hue === null));
+  assert.ok(Math.abs(s[1999].end - Math.PI * 2) < 1e-9);          // still closes the circle
+  const o = P.othersSummary(s);
+  assert.strictEqual(o.players, 1976);
+  assert.strictEqual(o.entries, BIG.slice(24).reduce((t, r) => t + r.entries, 0));
+  assert.deepStrictEqual(P.othersSummary(P.wheelSlices([{ name: 'a', entries: 2 }])), { players: 0, entries: 0 });
+});
+
+test('slices carry their odds for the tap/hover readout', () => {
+  const s = P.wheelSlices([{ name: 'a', entries: 3 }, { name: 'b', entries: 1 }]);
+  assert.deepStrictEqual(s.map((x) => x.odds), ['75.0%', '25.0%']);
+});
+
+test('sliceAt finds the slice under any angle, including wrap-around, on a huge wheel', () => {
+  const s = P.wheelSlices(BIG);
+  for (const i of [0, 1, 23, 24, 999, 1999]) {
+    const mid = (s[i].start + s[i].end) / 2;
+    assert.strictEqual(P.sliceAt(s, mid), i, 'slice ' + i);
+    assert.strictEqual(P.sliceAt(s, mid + Math.PI * 2), i, 'wrapped ' + i);
+    assert.strictEqual(P.sliceAt(s, mid - Math.PI * 2), i, 'negative ' + i);
+  }
+  assert.strictEqual(P.sliceAt([], 1), -1);
+});
+
+test('names go only on named slices wide enough to read', () => {
+  const s = P.wheelSlices(BIG);
+  assert.ok(!s.slice(24).some(P.showsLabel));
+  const few = P.wheelSlices([{ name: 'a', entries: 10 }, { name: 'b', entries: 10 }]);
+  assert.ok(few.every(P.showsLabel));
+});
+
+test('a legend appears only when named slices are too thin to carry their names', () => {
+  assert.strictEqual(P.needsLegend(P.wheelSlices(BIG)), true);
+  assert.strictEqual(P.needsLegend(P.wheelSlices([{ name: 'a', entries: 5 }, { name: 'b', entries: 5 }])), false);
+});
+
+test('the band sweeps smoothly violet to magenta, dimmer behind a winner', () => {
+  assert.strictEqual(P.bandColor(0, 0, false), 'hsl(262.0 62% 30%)');
+  assert.strictEqual(P.bandColor(1, 1, false), 'hsl(314.0 62% 33%)');
+  assert.strictEqual(P.bandColor(0, 0.5, true), 'hsl(288.0 30% 14%)');
+  assert.strictEqual(P.bandColor(0, 7, false), P.bandColor(0, 1, false));   // clamped
+});
+
+function seeded(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+
+test('lightning stays on the rim: ends exactly on it, every point within the jitter', () => {
+  const o = { cx: 200, cy: 200, r: 150, start: 1, span: 0.7, jitter: 6, segments: 14, branchChance: 1 };
+  for (let seed = 1; seed <= 50; seed++) {
+    const bolt = P.rimBolt(seeded(seed), o);
+    assert.strictEqual(bolt.main.length, 15);
+    const dist = ([x, y]) => Math.hypot(x - 200, y - 200);
+    assert.ok(Math.abs(dist(bolt.main[0]) - 150) < 1e-9 && Math.abs(dist(bolt.main[14]) - 150) < 1e-9);
+    for (const p of bolt.main.concat(bolt.branch)) assert.ok(Math.abs(dist(p) - 150) <= 6 + 1e-9, 'off the rim');
+    assert.strictEqual(bolt.branch.length, 5);
+  }
+  assert.strictEqual(P.rimBolt(seeded(3), { ...o, branchChance: 0 }).branch, null);
+});
+
+test('the list shows a page at a time, but a search covers everyone', () => {
+  const rows = P.viewModel({ ...WEEK3, players: BIG }).rows;
+  assert.strictEqual(P.visibleRows(rows, 100, '').length, 100);
+  assert.strictEqual(P.visibleRows(rows, 200, '').length, 200);
+  assert.deepStrictEqual(P.visibleRows(rows, 100, 'p1999').map((r) => r.name), ['p1999']);
+});
+
 test('at rest, the winner sits under the pointer; with no winner the wheel is untouched', () => {
   const s = P.wheelSlices([{ name: 'a', entries: 2 }, { name: 'b', entries: 2 }]);
   // b spans 180°–360°, so its middle (270°) must turn back to 12 o'clock.
