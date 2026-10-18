@@ -75,6 +75,12 @@
   .winner .name{font:700 clamp(1.8rem,7vw,2.6rem)/1.1 'Fredoka',sans-serif;color:var(--gold);overflow-wrap:anywhere}
   .winner .sub{color:var(--muted);font-size:.92rem}
 
+  .lastwin{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 12px;text-align:center;
+    padding:12px 16px;border-radius:14px;border:1px solid rgba(255,207,58,.7);box-shadow:0 0 30px rgba(255,207,58,.22);
+    background:linear-gradient(95deg,rgba(185,121,15,.35),rgba(255,207,58,.2),rgba(185,121,15,.35))}
+  .lastwin .lw-label{font:600 .78rem 'Outfit',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#fff7c2}
+  .lastwin .lw-name{font:700 clamp(1.3rem,5vw,1.8rem)/1.1 'Fredoka',sans-serif;color:var(--gold);text-shadow:0 0 16px rgba(255,207,58,.55);overflow-wrap:anywhere}
+  .lastwin .lw-sub{color:#ffe9a3;font-size:.86rem}
   .note{color:var(--muted);font-size:.92rem}
   .note.warn{color:var(--gold)}
 
@@ -155,6 +161,12 @@
 <button class="sound-btn" id="soundBtn" type="button" aria-pressed="false" aria-label="Sound off" hidden><span class="si" aria-hidden="true">&#x1F507;</span><span class="sl">Sound off</span></button>
 <main>
   <a class="brand" href="/"><b>37</b> The Math Puzzle</a>
+
+  <section class="lastwin" id="lastWin" hidden>
+    <span class="lw-label">&#x1F3C6; Last week&rsquo;s winner</span>
+    <span class="lw-name" id="lastWinName"></span>
+    <span class="lw-sub" id="lastWinSub"></span>
+  </section>
 
   <header>
     <p class="eyebrow" id="eyebrow">$37 weekly giveaway</p>
@@ -989,6 +1001,14 @@
     $('eyebrow').textContent = '$37 weekly giveaway · Drawing ' + vm.number + ' of ' + vm.totalDrawings;
     $('range').textContent = 'Dailies from ' + vm.rangeText + ' · drawn ' + vm.drawingText + ' by 9:00pm ET';
     show('error', false); show('retry', false);
+
+    // Last week's winner stays on top all week, until this week's is drawn.
+    var lw = vm.state !== 'drawn' ? vm.lastWinner : null;
+    show('lastWin', Boolean(lw));
+    if (lw) {
+      $('lastWinName').textContent = lw.name;
+      $('lastWinSub').textContent = 'Drawing ' + lw.number + ' · ' + lw.drawingText + ' · Congratulations!';
+    }
 
     show('winner', vm.state === 'drawn');
     if (vm.winner) {

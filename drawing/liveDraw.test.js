@@ -94,7 +94,7 @@ test('every page computes the same spin from the same seed', () => {
   for (const el of [0, 100, 419, 420, 1000, 4000, 8199, 8200]) {
     assert.strictEqual(L.rotationAt(a.spins[0], el).rot, L.rotationAt(b.spins[0], el).rot);
   }
-  assert.ok(a.spins[0].turns >= 6 && a.spins[0].turns <= 8);
+  assert.ok(a.spins[0].turns >= 9 && a.spins[0].turns <= 11);
 });
 
 test('the wind-up pulls back, then the wheel turns forward and slows', () => {
@@ -132,22 +132,49 @@ test('member views size each player by their tickets inside the range', () => {
   assert.strictEqual(last.view.slices.reduce((s, x) => s + x.count, 0), last.view.n);
 });
 
-test('phases: countdown, drumroll, late, spinning, drawn', () => {
+test('phases: countdown, the show, spin, reveal, drawn', () => {
   const pool = L.ticketPool(PLAYERS);
   const drawAt = Date.parse('2026-10-19T01:00:00Z');
-  const spinAt = drawAt + 30000;
-  assert.strictEqual(L.phaseAt(null, drawAt, null, drawAt - 5000).phase, 'countdown');
-  assert.strictEqual(L.phaseAt(null, drawAt, null, drawAt - 5000).msLeft, 5000);
-  assert.strictEqual(L.phaseAt(null, drawAt, null, drawAt + 3000).phase, 'drumroll');
+  const spinAt = drawAt + L.SHOW_MS;               // 9:01:00 ET, as the server sets it
+  assert.deepStrictEqual(L.phaseAt(null, drawAt, null, drawAt - 5000), { phase: 'countdown', msLeft: 5000 });
+  // 9:00:03: the show runs on the page's own clock, before any result is public
+  const show = L.phaseAt(null, drawAt, null, drawAt + 3000);
+  assert.strictEqual(show.phase, 'show');
+  assert.strictEqual(show.el, 3000);
+  assert.strictEqual(show.msLeft, L.SHOW_MS - 3000);
+  // past 9:01 with no result: waiting, then late
+  assert.strictEqual(L.phaseAt(null, drawAt, null, drawAt + L.SHOW_MS + 1000).phase, 'waiting');
   assert.strictEqual(L.phaseAt(null, drawAt, null, drawAt + L.LATE_AFTER_MS + 1).phase, 'late');
   const tl = L.timeline(pool, 25, 5);
-  assert.strictEqual(L.phaseAt(tl, drawAt, spinAt, drawAt + 10000).phase, 'drumroll');
+  // the result arrives 2 s before the spin: still the show, counting to spinAt
+  const pre = L.phaseAt(tl, drawAt, spinAt, spinAt - 2000);
+  assert.strictEqual(pre.phase, 'show');
+  assert.strictEqual(pre.msLeft, 2000);
   const mid = L.phaseAt(tl, drawAt, spinAt, spinAt + 4000);
   assert.strictEqual(mid.phase, 'spinning');
   assert.strictEqual(mid.el, 4000);
-  assert.strictEqual(L.phaseAt(tl, drawAt, spinAt, spinAt + tl.endMs).phase, 'drawn');
-  // a winner recorded early (a rehearsal) before 9pm is still counted down to
-  assert.strictEqual(L.phaseAt(tl, drawAt, drawAt - 60000 + 1000, drawAt - 60000).phase, 'countdown');
+  const rv = L.phaseAt(tl, drawAt, spinAt, spinAt + tl.endMs + 1000);
+  assert.deepStrictEqual(rv, { phase: 'reveal', el: 1000 });
+  assert.strictEqual(L.phaseAt(tl, drawAt, spinAt, spinAt + tl.endMs + L.REVEAL_MS).phase, 'drawn');
+  // a late result (hand-recorded at 9:10) spins when its spinAt comes
+  const late = drawAt + 600000;
+  assert.strictEqual(L.phaseAt(tl, drawAt, late, late - 1000).phase, 'waiting');
+  assert.strictEqual(L.phaseAt(tl, drawAt, late, late + 10).phase, 'spinning');
+  // a replay (drawAt = -Infinity) skips the show
+  assert.strictEqual(L.phaseAt(tl, -Infinity, spinAt, spinAt - 500).phase, 'waiting');
+  assert.strictEqual(L.phaseAt(tl, -Infinity, spinAt, spinAt + 100).phase, 'spinning');
+});
+
+test('the show: the randomizer, then three thank-you slides, then the spin at 9:01', () => {
+  assert.strictEqual(L.SHOW_MS, 60000);
+  assert.strictEqual(L.slideAt(0), 0);
+  assert.strictEqual(L.slideAt(5999), 0);
+  assert.strictEqual(L.slideAt(6000), 1);
+  assert.strictEqual(L.slideAt(23999), 1);
+  assert.strictEqual(L.slideAt(24000), 2);
+  assert.strictEqual(L.slideAt(42000), 3);
+  assert.strictEqual(L.slideAt(59999), 3);
+  assert.ok(L.THANKS_AT < L.REVEAL_MS && L.REVEAL_MS >= 5000 && L.REVEAL_MS <= 7000);
 });
 
 test('phases: a staged draw pauses between spins', () => {

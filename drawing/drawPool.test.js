@@ -310,3 +310,11 @@ test('search finds a username anywhere in it, ignoring case', () => {
   assert.deepStrictEqual(P.filterRows(rows, '  ').length, 4);
   assert.deepStrictEqual(P.filterRows(rows, 'zzz'), []);
 });
+
+test('last week\'s winner is carried for the banner atop the new week', () => {
+  const vm = P.viewModel({ ...WEEK3, drawing: '2026-10-25', from: '2026-10-18', to: '2026-10-24',
+    lastWinner: { name: 'stutz', drawing: '2026-10-18', ticket: 7, totalEntries: 185 } }, Date.parse('2026-10-19T15:00:00Z'));
+  assert.deepStrictEqual(vm.lastWinner, { name: 'stutz', drawingText: P.shortDate('2026-10-18'), number: 4 });
+  assert.strictEqual(P.viewModel(WEEK3).lastWinner, null);
+  assert.strictEqual(P.viewModel({ ...WEEK3, lastWinner: {} }).lastWinner, null);
+});

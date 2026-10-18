@@ -125,6 +125,12 @@
       // Days of the week still open for entries, today (Eastern) included.
       daysLeft: Math.max(0, Math.round((isoDay(pool.to) - isoDay(new Date(now).toLocaleDateString('en-CA', { timeZone: ET }))) / DAY) + 1),
       rows: rankRows(players, total),
+      // The previous drawing's winner, for the banner atop the new week.
+      lastWinner: pool.lastWinner && pool.lastWinner.name ? {
+        name: String(pool.lastWinner.name),
+        drawingText: pool.lastWinner.drawing ? shortDate(pool.lastWinner.drawing) : '',
+        number: pool.lastWinner.drawing ? drawingNumber(pool.lastWinner.drawing) : null,
+      } : null,
       winner: pool.winner ? {
         name: String(pool.winner.name),
         ticketText: pool.winner.ticket != null

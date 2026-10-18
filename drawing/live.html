@@ -186,6 +186,45 @@ a { color: var(--cyan); }
 @keyframes ask { 50% { box-shadow: 0 0 22px rgba(255,207,58,0.55); } }
 :focus-visible { outline: 2px solid var(--cyan-hi); outline-offset: 3px; border-radius: 4px; }
 
+/* ── THE SHOW: the randomizer, then the thank-you, over the wheel ── */
+.message {
+  position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 12px;
+  background: radial-gradient(circle at 50% 50%, rgba(4,3,14,0.55), rgba(4,3,14,0.82) 70%);
+  opacity: 0; pointer-events: none; transition: opacity 0.6s ease;
+}
+.message.on { opacity: 1; }
+.msg-card {
+  max-width: 640px; width: 100%; text-align: center; display: grid; gap: 14px;
+  padding: clamp(18px, 3vw, 32px); border-radius: 20px;
+  background: linear-gradient(165deg, rgba(28,18,58,0.92), rgba(10,7,26,0.94));
+  border: 1px solid rgba(255,207,58,0.45);
+  box-shadow: 0 0 0 1px rgba(255,247,194,0.12) inset, 0 0 60px rgba(192,77,255,0.25), 0 20px 60px rgba(0,0,0,0.55);
+}
+.msg-body { font-size: clamp(1rem, 0.9rem + 0.7vw, 1.35rem); line-height: 1.55; color: var(--text); text-wrap: pretty; }
+.msg-body.big { font-family: 'Chakra Petch', system-ui, sans-serif; font-weight: 700; font-size: clamp(1.5rem, 1.1rem + 2.4vw, 2.6rem); line-height: 1.15; color: var(--gold); text-shadow: 0 0 22px rgba(255,207,58,0.6); }
+.msg-body .dots::after { content: '…'; animation: dots 1.4s steps(4, end) infinite; display: inline-block; width: 1.2em; text-align: left; overflow: hidden; vertical-align: bottom; }
+@keyframes dots { 0% { width: 0; } 100% { width: 1.2em; } }
+.msg-sign { font-family: 'Chakra Petch', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.06em; color: var(--gold); font-size: var(--step-1); }
+.msg-sign a { display: block; margin-top: 2px; font-family: 'Sora', system-ui, sans-serif; font-size: var(--step--1); font-weight: 400; letter-spacing: 0; color: var(--cyan-hi); }
+.msg-step { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.msg-anim { animation: msgIn 0.7s cubic-bezier(.2,.9,.3,1.1) both; }
+@keyframes msgIn { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* ── the winner banner, atop the page once the card closes ── */
+.winbanner {
+  position: relative; z-index: 4; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 12px;
+  flex: 1 1 100%; order: -1; margin: 0 0 4px; padding: 8px 16px; border-radius: 14px; text-align: center;
+  background: linear-gradient(95deg, rgba(185,121,15,0.35), rgba(255,207,58,0.22), rgba(185,121,15,0.35));
+  border: 1px solid rgba(255,207,58,0.7); box-shadow: 0 0 30px rgba(255,207,58,0.25);
+  animation: msgIn 0.8s cubic-bezier(.2,.9,.3,1.1) both;
+}
+.winbanner .wb-label { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: var(--step--1); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-hi); }
+.winbanner .wb-name { font-family: 'Chakra Petch', system-ui, sans-serif; font-weight: 700; font-size: var(--step-2); color: var(--gold); text-shadow: 0 0 18px rgba(255,207,58,0.6); overflow-wrap: anywhere; }
+.winbanner .wb-sub { font-size: var(--step--1); color: var(--gold-mid); }
+.win .thanks { margin-top: 18px; font-family: 'Chakra Petch', system-ui, sans-serif; font-weight: 700; font-size: var(--step-2); color: var(--cyan-hi); text-shadow: 0 0 20px rgba(34,245,255,0.55); opacity: 0; transform: translateY(10px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.win.thanked .thanks { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .msg-anim, .winbanner { animation: none; } .msg-body .dots::after { animation: none; width: 1.2em; } }
+
 footer { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 22px; padding-top: 12px; border-top: 1px solid var(--hair); color: var(--muted); font-size: var(--step--1); }
 footer a { color: var(--muted); }
 
@@ -284,6 +323,11 @@ footer a { color: var(--muted); }
   <div class="spotlight" id="spotDim" aria-hidden="true"></div>
 
   <header class="mast">
+    <div class="winbanner" id="winBanner" hidden role="status">
+      <span class="wb-label">&#x1F3C6; This week&rsquo;s winner</span>
+      <span class="wb-name" id="wbName"></span>
+      <span class="wb-sub" id="wbSub"></span>
+    </div>
     <a class="mark" href="/" aria-label="37 The Math Puzzle home">37<span>&thinsp;·&thinsp;$37</span></a>
     <div class="mast-meta">
       <div class="eyebrow">Weekly prize draw · Live</div>
@@ -319,19 +363,22 @@ footer a { color: var(--muted); }
           <div class="rec wide"><dt>Winner</dt><dd id="rWinner" class="pending">not drawn yet</dd></div>
           <div class="rec wide"><dt>Drawn</dt><dd id="rWhen" class="pending">automatically, 8:00pm CT / 9:00pm ET</dd></div>
         </dl>
-        <p class="rec-note">One ticket is drawn at random by our server at 9:00pm ET: every entry has the same chance. The wheel then shows that ticket, live, on every screen at once. Nobody presses a button.</p>
+        <p class="rec-note">At 8:00pm CT / 9:00pm ET our server draws one ticket at random: every entry has the same chance, and nobody presses a button. At 8:01 the wheel spins to that ticket, live, on every screen at once.</p>
       </section>
     </aside>
 
     <div class="wheel-col">
       <div class="showbar" id="showBar" aria-live="polite">
-        <span class="sb-label" id="sbLabel">The wheel spins itself at 8:00pm CT · 9:00pm ET</span>
+        <span class="sb-label" id="sbLabel">The live draw starts at 8:00pm CT · 9:00pm ET</span>
         <span class="sb-big" id="sbBig">Loading…</span>
         <span class="sb-sub" id="sbSub"></span>
       </div>
       <p class="stagebar" id="stageBar" hidden><b id="stageLabel"></b> <span id="stageNote"></span></p>
       <div class="wheel-wrap">
         <canvas id="wheel" role="img" aria-label="Drawing wheel. One slice per player, sized by their share of the entries."></canvas>
+        <div class="message" id="message" aria-live="polite">
+          <div class="msg-card" id="msgCard"></div>
+        </div>
       </div>
       <p class="spin-hint" id="spinHint">Every viewer sees the same spin at the same moment. Turn the sound on for the drumroll.</p>
       <button class="btn accent" id="replayBtn" type="button" hidden style="justify-self:center;width:auto">&#x21BB; Replay the draw</button>
@@ -366,6 +413,7 @@ footer a { color: var(--muted); }
       <button class="btn accent" id="winClose" type="button">Close</button>
       <button class="btn prize" id="winReplay" type="button">&#x21BB; Replay the draw</button>
     </div>
+    <p class="thanks">Thank you for watching!</p>
     <p class="caveat">Congratulations! We&rsquo;ll email the winner from contactus@hiipointegames.com. The prize is subject to the official rules, including the 18+ and US eligibility check.</p>
   </div>
 </div>
@@ -430,6 +478,12 @@ footer a { color: var(--muted); }
   // ══════════════════════════════════════════════════════════════════════════
   // DATA
   // ══════════════════════════════════════════════════════════════════════════
+  // One address for the whole week: show /drawing in the address bar here too.
+  // (A refresh lands on /drawing, which hands straight back to this page.)
+  if (/^\/drawing\/live(\.html)?$/.test(location.pathname) && history.replaceState) {
+    try { history.replaceState(null, '', '/drawing' + location.search + location.hash); } catch (_) {}
+  }
+
   async function fetchPool() {
     const sent = Date.now();
     const res = await fetch(SOURCE.url + '/rest/v1/rpc/get_contest_pool', {
@@ -483,18 +537,21 @@ footer a { color: var(--muted); }
     if (!Number.isFinite(seed)) { seed = 0; for (const c of String(w.name)) seed = (seed * 31 + c.charCodeAt(0)) >>> 0; }
     S.tl = L.timeline(S.pool, ticket, seed);
     S.ticket = ticket;
-    // Arrived after the show: rest on the result, no fireworks (Replay is there).
-    if (now() >= S.spinAt + S.tl.endMs) finish(false);
   }
 
+  // The server keeps the result private until 2 s before the 9:01 spin, so
+  // there is nothing to fetch during the show: one call near the start (to
+  // refresh the clock), then quick polls from 4 s before the spin.
   async function poll() {
     let wait = 60000;
     try {
       apply(await fetchPool());
       S.fails = 0;
       if (S.winner) return;                            // the result never changes again
-      const t = now();
-      wait = t < S.drawAt - 20000 ? Math.min(60000, S.drawAt - 20000 - t) : 1800 + Math.random() * 900;
+      const t = now(), due = S.drawAt + L.SHOW_MS;
+      wait = t < S.drawAt - 20000 ? Math.min(60000, S.drawAt - 20000 - t)
+        : t < due - 4000 ? Math.max(500, Math.min(15000, due - 4000 - t))
+        : 600 + Math.random() * 500;
     } catch (e) {
       S.fails++;
       if (S.fails >= 2 && !S.raw) showBar('warn', 'Connecting…', 'Can’t reach the draw right now', 'Trying again every few seconds. Keep this page open.');
@@ -661,7 +718,9 @@ footer a { color: var(--muted); }
   }
 
   const LABEL_CAP = 56;
+  let labelGap = 21;
   function layoutLabels() {
+    labelGap = 21;
     const v = view, n = v.n;
     if (narrow || !n || v.slices.length > LABEL_CAP) return [];
     const seg = TAU / n, start = -Math.PI / 2 + rot, out = [];
@@ -677,7 +736,8 @@ footer a { color: var(--muted); }
       if (!col.length) continue;
       // Tighter rows when one side is crowded (most small players sit together),
       // so the last names are not pushed off the bottom of the canvas.
-      const GAP = Math.max(13, Math.min(21, (VH - 44) / col.length));
+      const GAP = Math.max(12, Math.min(21, (VH - 44) / col.length));
+      labelGap = Math.min(labelGap, GAP);
       for (let i = 1; i < col.length; i++) if (col[i].y - col[i - 1].y < GAP) col[i].y = col[i - 1].y + GAP;
       const overflow = col[col.length - 1].y - (VH - 22);
       if (overflow > 0) {
@@ -692,7 +752,8 @@ footer a { color: var(--muted); }
   function drawLabels() {
     const items = layoutLabels();
     if (!items.length) return;
-    const size = VW < 760 ? 11 : 13, gutter = gutterW();
+    // Shrink the type when rows are tight, so crowded names never overprint.
+    const size = Math.max(9, Math.min(VW < 760 ? 11 : 13, Math.floor(labelGap) - 3)), gutter = gutterW();
     cx.save();
     cx.font = '600 ' + size + 'px Sora, system-ui, sans-serif';
     cx.textBaseline = 'middle';
@@ -1025,9 +1086,45 @@ footer a { color: var(--muted); }
   // ══════════════════════════════════════════════════════════════════════════
   let lastPeg = null, lastRot = 0, lastFrame = 0, roll = 0, riserFor = -1;
 
+  // ── The message during the show (David & Bryce, approved 2026-10-18) ──
+  const SLIDES = [
+    null,   // 0: "While our randomizer works its magic…", built in showSlide()
+    'Before we spin, a thank-you from the two of us. Every Sunday we sit down to watch this wheel with you, and every week we’re amazed you’re here. Every Daily you finished this week put a ticket in this hat.',
+    'We started 37 to bring quality games and real cash to everyday people, completely free. No catch, no purchase, just your brain and a little luck. Every share and every friend you bring in helps us grow, and the bigger we grow, the more we can give away.',
+    'Ideas, complaints or kind words, send them our way. We read every message, and your feedback shapes the game. Thank you for being part of this. Now… let’s find this week’s winner!',
+  ];
+  let msgShown = -1;
+  function showSlide(i) {
+    $('message').classList.add('on');
+    if (i === msgShown) return;
+    msgShown = i;
+    const card = $('msgCard');
+    card.textContent = '';
+    card.classList.remove('msg-anim'); void card.offsetWidth; card.classList.add('msg-anim');
+    const step = document.createElement('div'); step.className = 'msg-step';
+    const body = document.createElement('p'); body.style.margin = '0';
+    if (i === 0) {
+      step.textContent = 'Drawing ' + DP.drawingNumber(S.raw.drawing) + ' · ' + fmt(S.total) + ' entries · every entry has the same chance';
+      body.className = 'msg-body big';
+      body.append('While our randomizer works its magic');
+      const dots = document.createElement('span'); dots.className = 'dots'; body.appendChild(dots);
+      card.append(step, body);
+    } else {
+      step.textContent = 'A word from us · ' + i + ' of 3';
+      body.className = 'msg-body'; body.textContent = SLIDES[i];
+      const sign = document.createElement('div'); sign.className = 'msg-sign'; sign.textContent = '— David & Bryce';
+      const mail = document.createElement('a'); mail.href = 'mailto:contactus@hiipointegames.com'; mail.textContent = 'contactus@hiipointegames.com';
+      sign.appendChild(mail);
+      card.append(step, body, sign);
+    }
+  }
+  function hideSlide() { if (msgShown !== -1) { msgShown = -1; $('message').classList.remove('on'); } }
+
   function enter(ph) {
     const sp = ph.spin;
+    if (ph.phase !== 'show') hideSlide();
     if (ph.phase === 'spinning') {
+      closeWin(); $('winBanner').hidden = true;
       if (view !== sp.view) { view = sp.view; bakeKey = ''; }
       hot = -1; spinning = true; spot = 0; spotFade = false;
       lastPeg = null; S.watched = true;
@@ -1036,10 +1133,10 @@ footer a { color: var(--muted); }
           ? 'which of ' + view.slices.length + ' ranges holds the winning ticket?'
           : view.slices.length + ' players hold those ' + fmt(view.n) + ' tickets', false);
       } else $('stageBar').hidden = true;
-      // The riser peaks as the deciding spin stops.
+      // The riser builds over the last few seconds and peaks as the deciding spin stops.
       if (sp.spotlight && riserFor !== sp.start) {
         riserFor = sp.start;
-        const left = (sp.dur - ph.el) / 1000, riseFor = Math.min(3.2, sp.dur / 1000 * 0.42);
+        const left = (sp.dur - ph.el) / 1000, riseFor = Math.min(5, sp.dur / 1000 * 0.42);
         try { if (left > 0.3) riser(audio().currentTime + Math.max(0, left - riseFor), Math.min(riseFor, left)); } catch (_) {}
       }
       $('live').textContent = 'The wheel is spinning.';
@@ -1047,6 +1144,13 @@ footer a { color: var(--muted); }
       settle(sp);
       const r = sp.range;
       banner('Tickets ' + fmt(r.lo) + '–' + fmt(r.hi - 1), fmt(r.count) + ' tickets · ' + (L.holderOf(S.pool, r.hi - 1) - L.holderOf(S.pool, r.lo) + 1) + ' players still in', true);
+    } else if (ph.phase === 'reveal') {
+      land();
+      openCard(ph.el);
+    } else if (ph.phase === 'drawn') {
+      land();
+      closeWin();
+      showWinBanner();
     }
   }
 
@@ -1072,15 +1176,19 @@ footer a { color: var(--muted); }
 
     if (ph.phase === 'countdown') {
       lightRate = 3;
-      showBar('', 'The wheel spins itself at 8:00pm CT · 9:00pm ET', L.clockText(ph.msLeft), 'Drawing ' + DP.drawingNumber(S.raw.drawing) + ' · ' + fmt(S.total) + ' entries in the hat');
+      showBar('', 'The live draw starts at 8:00pm CT · 9:00pm ET', L.clockText(ph.msLeft), 'Drawing ' + DP.drawingNumber(S.raw.drawing) + ' · ' + fmt(S.total) + ' entries in the hat');
       setChip('live', ph.msLeft < 3600000 ? 'Live in ' + Math.ceil(ph.msLeft / 60000) + ' min' : 'Live tonight');
-      if (ph.msLeft < 15000 && !muted && !replay) drum(dt, 1 - ph.msLeft / 15000, 0.12);
-    } else if (ph.phase === 'drumroll') {
-      lightRate = 10;
-      const left = ph.msLeft;
-      showBar('hot', left != null ? 'Ticket drawn. The wheel spins in' : 'It’s 9:00pm ET', left != null ? L.clockText(left) : 'Drawing a ticket…', left != null ? 'Every screen spins together.' : 'Every entry has the same chance.');
+    } else if (ph.phase === 'show') {
+      lightRate = 6;
+      showSlide(L.slideAt(ph.el));
+      showBar('hot', 'Live now · the wheel spins in', L.clockText(ph.msLeft), 'Every screen spins together at 8:01pm CT');
       setChip('live', 'Live now');
-      drum(dt, left != null ? Math.max(0, 1 - left / 30000) : 0.3, 0.15);
+      if (ph.msLeft < 8000) drum(dt, 1 - ph.msLeft / 8000, 0.12);   // the roll builds in the last 8 s
+    } else if (ph.phase === 'waiting') {
+      lightRate = 10;
+      showBar('hot', replay ? 'Replay' : 'Live now', replay ? 'Here we go…' : 'Almost there…', replay ? '' : 'The wheel spins the moment the result is in.');
+      setChip('live', replay ? 'Replay' : 'Live now');
+      drum(dt, 0.6, 0.15);
     } else if (ph.phase === 'late') {
       lightRate = 3;
       showBar('warn', 'Running a little late', 'The draw is a few minutes behind', 'Stay on this page: the wheel spins on its own the moment the ticket is drawn.');
@@ -1091,17 +1199,14 @@ footer a { color: var(--muted); }
       setChip('live', replay ? 'Replay' : 'Live now');
     } else if (ph.phase === 'pause') {
       lightRate = 8;
-    } else if (ph.phase === 'drawn' && !S.landed) {
-      finish(true);
-    } else if (ph.phase === 'drawn' && replay && S.landed && S.replayDone !== S.replayAt) {
-      S.replayDone = S.replayAt;
-      finish(true);
+    } else if (ph.phase === 'reveal') {
+      stepCard(ph.el);
     }
     if (ph.phase !== 'spinning') stepFlap();
     drawWheel();
   }
 
-  /** The drumroll before the spin: soft, then building. */
+  /** The drumroll: soft, then building. */
   function drum(dt, k, base) {
     if (muted || reduced) return;
     roll += (5 + 9 * k) * dt;
@@ -1121,22 +1226,23 @@ footer a { color: var(--muted); }
       const slow = Math.max(0, Math.min(1, 1 - unitsPerSec / 30));
       tick(slow); kickFlap(0.22 + 0.16 * slow);
     }
-    if (!reduced && r.p > 0.4 && r.p < 1 && dt) {
+    if (!reduced && r.p > 0.3 && r.p < 1 && dt) {
       roll += Math.max(6, Math.min(18, unitsPerSec * 0.9)) * dt;
-      if (roll >= 1) { roll -= Math.floor(roll); snare(0.25 + 0.75 * (r.p - 0.4) / 0.6); }
+      if (roll >= 1) { roll -= Math.floor(roll); snare(0.25 + 0.75 * (r.p - 0.3) / 0.7); }
     }
     lightRate = Math.max(3, Math.min(30, radPerSec * 7.6));
+    // The spotlight closes in over the last 4 s of the deciding spin.
     if (sp.spotlight && !reduced && ph.el >= L.WINDUP_MS) {
-      const Dm = sp.dur - L.WINDUP_MS, q = Math.max(0, Math.min(1, 1 - ((1 - r.p) * Dm) / 2200));
+      const Dm = sp.dur - L.WINDUP_MS, q = Math.max(0, Math.min(1, 1 - ((1 - r.p) * Dm) / 4000));
       spot = q * q * (3 - 2 * q);
     }
   }
 
-  /** The result: settle the wheel on the winner, then (if this page watched) the reveal. */
-  async function finish(theatre) {
+  /** The result into the page: the wheel on the winner, the record, the ledger. */
+  function land() {
     if (!S.tl) return;
-    const last = S.tl.spins[S.tl.spins.length - 1];
-    settle(last);
+    settle(S.tl.spins[S.tl.spins.length - 1]);
+    if (S.landed) return;
     S.landed = true;
     const w = S.pool[S.tl.winnerIndex];
     const odds = DP.oddsText(w.entries, S.total);
@@ -1146,13 +1252,8 @@ footer a { color: var(--muted); }
     set('rOdds', w.entries + '/' + fmt(S.total) + ' (' + odds + ')');
     const at = S.winner.drawnAt ? new Date(S.winner.drawnAt) : new Date(now());
     set('rWhen', at.toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' }) + ' ET');
-    banner('Winner', w.name + ' · ticket ' + fmt(S.ticket) + ' of ' + fmt(S.total), true);
-    showBar('won', 'This week’s winner', w.name, 'Ticket ' + fmt(S.ticket) + ' of ' + fmt(S.total) + ' · ' + w.entries + (w.entries === 1 ? ' entry' : ' entries') + ' · ' + odds + ' chance');
-    setChip('final', 'Drawn');
     renderLedger();
-    $('replayBtn').hidden = false;
     $('live').textContent = 'Winner: ' + w.name + ', holding ' + w.entries + ' of ' + S.total + ' entries.';
-
     $('winName').textContent = w.name;
     $('stubTicket').textContent = 'Ticket ' + fmt(S.ticket) + ' of ' + fmt(S.total);
     $('stubOdds').textContent = w.entries + (w.entries === 1 ? ' entry' : ' entries') + ' · ' + odds;
@@ -1160,35 +1261,63 @@ footer a { color: var(--muted); }
     facts.textContent = '';
     [['Entries held', w.entries + ' of ' + fmt(S.total)], ['Odds', odds], ['Ticket', '#' + fmt(S.ticket)], ['Drawing', niceDate(S.raw.drawing)]]
       .forEach(([k, v]) => { const sp = document.createElement('span'); sp.className = 'chip'; const b = document.createElement('b'); b.textContent = v; sp.append(k + ' ', b); facts.appendChild(sp); });
+    $('wbName').textContent = w.name;
+    $('wbSub').textContent = 'Ticket ' + fmt(S.ticket) + ' of ' + fmt(S.total) + ' · ' + w.entries + (w.entries === 1 ? ' entry' : ' entries') + ' · Congratulations!';
+  }
 
-    if (!theatre) return;                           // arrived afterwards: the bar says who won
-    const fl = $('flash'); fl.classList.remove('go'); void fl.offsetWidth; if (!reduced) fl.classList.add('go');
-    const ring = $('ring'); ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go');
+  function showWinBanner() {
+    if (!S.landed) return;
+    const w = S.pool[S.tl.winnerIndex];
+    $('winBanner').hidden = false;
+    $('stageBar').hidden = true;
+    $('spinHint').hidden = true;                      // "every viewer sees the same spin": done now
+    document.querySelector('.rec-note').hidden = true; // the record above says it all; room for the list
+    showBar('won', 'Thank you for watching!', w.name, 'This week’s winner · see you next Sunday at 8:00pm CT');
+    setChip('final', 'Drawn');
+    $('replayBtn').hidden = false;
+  }
+
+  // The winner card: up for REVEAL_MS (about 7 s), building in beats, with a
+  // "thank you for watching" before it closes itself. A page that joins
+  // mid-card shows it already built, without the fireworks.
+  let cardFresh = false, cardBeat = -1;
+  function openCard(el) {
+    cardFresh = el < 900; cardBeat = -1;
+    $('win').classList.remove('thanked');
     $('win').dataset.beat = '0';
     $('takeover').classList.add('on');
-    stopThud();
-    await sleep(reduced ? 0 : 900);
-    $('win').dataset.beat = '1';
-    $('party').classList.add('on');
-    revealSound(); burst();
-    await sleep(reduced ? 0 : 950);
-    $('win').dataset.beat = '2';
-    $('winClose').focus({ preventScroll: true });
+    if (cardFresh) {
+      const fl = $('flash'); fl.classList.remove('go'); void fl.offsetWidth; if (!reduced) fl.classList.add('go');
+      const ring = $('ring'); ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go');
+      stopThud();
+    }
+    stepCard(el);
+  }
+  function stepCard(el) {
+    if (!$('takeover').classList.contains('on')) return;     // closed early by the viewer
+    const beat = el < 900 ? 0 : el < 1850 ? 1 : 2;
+    if (beat !== cardBeat) {
+      if (beat >= 1 && cardBeat < 1 && cardFresh) { $('party').classList.add('on'); revealSound(); burst(); }
+      cardBeat = beat;
+      $('win').dataset.beat = String(beat);
+    }
+    $('win').classList.toggle('thanked', el >= L.THANKS_AT);
   }
 
   function closeWin() {
     $('takeover').classList.remove('on');
     $('win').dataset.beat = '0';
+    $('win').classList.remove('thanked');
     stopParty();
   }
-  $('winClose').addEventListener('click', closeWin);
+  $('winClose').addEventListener('click', () => { closeWin(); if (S.landed) showWinBanner(); });
   // A replay plays the same timeline from now, on this screen only. It is
   // labelled "Replay" while it runs and lands on the same, recorded winner.
   function replay() {
     if (!S.tl) return;
     closeWin();
     try { if (!muted) audio().resume(); } catch (_) {}
-    S.replayAt = now() + 600; S.phaseKey = ''; riserFor = -1;
+    S.replayAt = now() + 1500; S.phaseKey = ''; riserFor = -1;
     view = S.tl.spins[0].view; rot = 0; hot = -1; bakeKey = '';
   }
   $('winReplay').addEventListener('click', replay);

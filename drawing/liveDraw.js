@@ -52,16 +52,20 @@
   // ── The draw's timeline ──────────────────────────────────────────────────
   // Same numbers the hand-run wheel used (drawing-wheel.html), so the live
   // draw looks like the draws people have already watched.
-  var SINGLE_MS = 8200;          // one spin, small pools
+  var SINGLE_MS = 15000;         // one spin, small pools: long enough to crawl the last turn
   var RANGE_MS = 5200;           // a narrowing spin in a staged draw
-  var LAST_MS = 6400;            // the deciding spin in a staged draw
+  var LAST_MS = 12000;           // the deciding spin in a staged draw
   var PAUSE_MS = 1900;           // the beat between stages
   var WINDUP_MS = 420;           // the wheel draws back before it launches
   var WIND = 0.14;               // ...by this many radians
   var SINGLE_STAGE_MAX_PLAYERS = 44;
   var TARGET_PLAYERS_PER_GROUP = 25;
   var MAX_STAGES = 5;
-  var LATE_AFTER_MS = 120000;    // no ticket 2 min after 9pm: say it's running late
+  var LATE_AFTER_MS = 150000;    // no result 2.5 min after 9pm: say it's running late
+  var SHOW_MS = 60000;           // 9:00:00 to 9:01:00 ET: the randomizer + the thank-you
+  var SLIDES_AT = [0, 6000, 24000, 42000];   // intro, then three thank-you slides of 18 s
+  var REVEAL_MS = 7000;          // the winner card stays up this long, then closes itself
+  var THANKS_AT = 3800;          // ...and says "thank you for watching" this far in
 
   /** Small seeded PRNG (mulberry32): same seed, same numbers, every browser. */
   function seeded(seed) {
@@ -207,7 +211,7 @@
       var dur = single ? SINGLE_MS : (last ? LAST_MS : RANGE_MS);
       spins.push({
         view: view, unit: unit, start: at, dur: dur,
-        turns: 6 + Math.floor(rand() * 3),
+        turns: 9 + Math.floor(rand() * 3),
         jitter: rand() - 0.5,                 // where in the slot it stops, ±31% of a ticket
         spotlight: last,
         hot: sliceAt(view, unit),
@@ -219,7 +223,9 @@
     return { spins: spins, endMs: at, winnerIndex: holderOf(pool, ticket), ticket: ticket };
   }
 
-  function easeOut(p) { return 1 - Math.pow(1 - p, 4.2); }
+  // A long, slow crawl through the last turn: the suspense. One continuous
+  // slow-down to the recorded ticket, never a stall or a tip-over.
+  function easeOut(p) { return 1 - Math.pow(1 - p, 5); }
 
   /** Where the wheel stops for a spin: radians, clockwise. */
   function spinTarget(spin) {
@@ -242,29 +248,43 @@
 
   /**
    * Where the show is at server time `nowMs`.
-   *   { phase: 'countdown' }             before 9pm ET, msLeft until it
-   *   { phase: 'drumroll' }              9pm, waiting for the ticket or for spinAt
-   *   { phase: 'late' }                  no ticket 2 min after 9pm
-   *   { phase: 'spinning', spin, el }    spin #k is running, el ms in
-   *   { phase: 'pause', spin }           between stages; spin = the one just landed
-   *   { phase: 'drawn' }                 it's over
-   * `drawAtMs` is 9pm ET on the drawing day; `spinAtMs` the server's spin
-   * start (or when this page first saw a hand-recorded winner, plus a beat).
+   *   { phase: 'countdown', msLeft }        before 9pm ET
+   *   { phase: 'show', el, msLeft }         9:00–9:01: the randomizer + thank-you
+   *                                         (el since 9pm; msLeft to the spin)
+   *   { phase: 'waiting' }                  show over, result not public yet
+   *   { phase: 'late' }                     still nothing 2.5 min after 9pm
+   *   { phase: 'spinning', spin, el }       spin #k is running, el ms in
+   *   { phase: 'pause', spin }              between stages; spin = the one just landed
+   *   { phase: 'reveal', el }               the winner card, el ms in; it closes itself
+   *   { phase: 'drawn' }                    over: the wheel and the winner banner
+   * `drawAtMs` is 9pm ET on the drawing day; `spinAtMs` the server's spin start
+   * (or, for a hand-recorded winner, when this page first saw it plus a beat).
    */
   function phaseAt(tl, drawAtMs, spinAtMs, nowMs) {
-    if (!tl) {
-      if (nowMs < drawAtMs) return { phase: 'countdown', msLeft: drawAtMs - nowMs };
-      return { phase: nowMs - drawAtMs < LATE_AFTER_MS ? 'drumroll' : 'late' };
+    if (nowMs < drawAtMs && (!tl || nowMs < spinAtMs)) return { phase: 'countdown', msLeft: drawAtMs - nowMs };
+    var since = nowMs - drawAtMs;
+    var t = tl ? nowMs - spinAtMs : -1;
+    if (!tl || t < 0) {
+      var spinDue = tl ? spinAtMs : drawAtMs + SHOW_MS;
+      if (since < SHOW_MS) return { phase: 'show', el: since, msLeft: spinDue - nowMs };
+      if (tl) return { phase: 'waiting', msLeft: -t };
+      return { phase: since < LATE_AFTER_MS ? 'waiting' : 'late' };
     }
-    var t = nowMs - spinAtMs;
-    if (t < 0) return nowMs < drawAtMs ? { phase: 'countdown', msLeft: drawAtMs - nowMs } : { phase: 'drumroll', msLeft: -t };
-    if (t >= tl.endMs) return { phase: 'drawn' };
+    if (t >= tl.endMs + REVEAL_MS) return { phase: 'drawn' };
+    if (t >= tl.endMs) return { phase: 'reveal', el: t - tl.endMs };
     for (var k = 0; k < tl.spins.length; k++) {
       var s = tl.spins[k];
       if (t < s.start) return { phase: 'pause', spin: tl.spins[k - 1], index: k - 1 };
       if (t < s.start + s.dur) return { phase: 'spinning', spin: s, index: k, el: t - s.start };
     }
     return { phase: 'drawn' };
+  }
+
+  /** Which message the show is on, `el` ms after 9pm: 0 = the randomizer, 1–3 = the thank-you. */
+  function slideAt(el) {
+    var i = 0;
+    for (var k = 0; k < SLIDES_AT.length; k++) if (el >= SLIDES_AT[k]) i = k;
+    return i;
   }
 
   /** 'H:MM:SS' or 'M:SS' for a countdown; '0:00' once it's due. */
@@ -280,7 +300,8 @@
     seeded: seeded, ticketPool: ticketPool, totalOf: totalOf, holderOf: holderOf,
     landingTicket: landingTicket, planStages: planStages, restingView: restingView,
     singleView: singleView, sliceAt: sliceAt, timeline: timeline, spinTarget: spinTarget,
-    rotationAt: rotationAt, phaseAt: phaseAt, clockText: clockText,
+    rotationAt: rotationAt, phaseAt: phaseAt, slideAt: slideAt, clockText: clockText,
     SINGLE_MS: SINGLE_MS, WINDUP_MS: WINDUP_MS, LATE_AFTER_MS: LATE_AFTER_MS,
+    SHOW_MS: SHOW_MS, REVEAL_MS: REVEAL_MS, THANKS_AT: THANKS_AT,
   };
 });
