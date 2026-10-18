@@ -104,6 +104,14 @@ a { color: var(--cyan); }
 .row:hover { border-color: rgba(192,77,255,0.40); }
 .row.won { border-color: rgba(255,255,255,0.65); box-shadow: 0 0 18px rgba(255,255,255,0.18) inset; }
 .row.won::before { background: var(--white-hot); opacity: 0.22; }
+.row { cursor: pointer; }
+.row.sel { border-color: var(--cyan); box-shadow: 0 0 16px rgba(34,245,255,0.3) inset; }
+.wheel-tip {
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%); z-index: 4; max-width: calc(100% - 16px);
+  padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(34,245,255,0.55); background: rgba(4,3,14,0.9);
+  font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: var(--step--1); color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+}
 .sw { position: relative; width: 9px; height: 9px; border-radius: 2px; background: var(--c); box-shadow: 0 0 7px var(--c); }
 .row .who { position: relative; font-weight: 600; font-size: 0.8rem; line-height: 1.55; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row.won .who { color: var(--white-hot); text-shadow: 0 0 12px rgba(255,255,255,0.8); }
@@ -376,6 +384,7 @@ footer a { color: var(--muted); }
       <p class="stagebar" id="stageBar" hidden><b id="stageLabel"></b> <span id="stageNote"></span></p>
       <div class="wheel-wrap">
         <canvas id="wheel" role="img" aria-label="Drawing wheel. One slice per player, sized by their share of the entries."></canvas>
+        <span class="wheel-tip" id="wheelTip" hidden role="status"></span>
         <div class="message" id="message" aria-live="polite">
           <div class="msg-card" id="msgCard"></div>
         </div>
@@ -465,6 +474,7 @@ footer a { color: var(--muted); }
     replayAt: 0,                        // a local replay's start (server ms), or 0
     watched: false,                     // this page saw the spin itself (so: fireworks)
     landed: false, phaseKey: '', fails: 0,
+    interactive: true,                  // taps pick players: not during the show, spin or card
   };
   const now = () => Date.now() + S.offset;
 
@@ -608,7 +618,7 @@ footer a { color: var(--muted); }
     const max = Math.max(1, ...S.pool.map((p) => p.entries));
     for (const p of shown) {
       const row = document.createElement('div');
-      row.className = 'row' + (p === winner ? ' won' : '');
+      row.className = 'row' + (p === winner ? ' won' : '') + (p.i === selected ? ' sel' : '');
       row.style.setProperty('--c', flat(p.i));
       row.style.setProperty('--pct', ((p.entries / max) * 100).toFixed(1) + '%');
       const sw = document.createElement('i'); sw.className = 'sw';
@@ -616,8 +626,11 @@ footer a { color: var(--muted); }
       const n = document.createElement('div'); n.className = 'n'; n.textContent = String(p.entries);
       const odds = document.createElement('div'); odds.className = 'odds'; odds.textContent = DP.oddsText(p.entries, S.total);
       row.append(sw, who, n, odds);
-      row.addEventListener('mouseenter', () => { highlight = p.i; bakeKey = ''; drawWheel(); });
-      row.addEventListener('mouseleave', () => { highlight = -1; bakeKey = ''; drawWheel(); });
+      // Tap (or click) a row to light up that player's slice; tap again to clear.
+      // Hovering with a mouse previews it.
+      row.addEventListener('click', () => selectPlayer(selected === p.i ? -1 : p.i));
+      row.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse' && S.interactive) setHighlight(p.i); });
+      row.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') setHighlight(selected); });
       el.appendChild(row);
     }
     const twoCol = false;   // one column: two squeezed every name to 'test_pl…'
@@ -637,7 +650,37 @@ footer a { color: var(--muted); }
     $('totEntries').textContent = fmt(S.total);
     $('totPlayers').textContent = fmt(S.pool.length);
   }
-  $('ledgerSearch').addEventListener('input', (e) => { query = e.target.value; renderLedger(); });
+  // "Find your username" also lights up your slice (the first match).
+  $('ledgerSearch').addEventListener('input', (e) => {
+    query = e.target.value;
+    const q = query.trim().toLowerCase();
+    const hit = q ? S.pool.find((p) => p.name.toLowerCase().includes(q)) : null;
+    selectPlayer(hit ? hit.i : -1, true);
+  });
+
+  // ── Picking a player: the list, the wheel and its labels all lead here ──
+  // Ignored during the show, the spin and the winner card, so a stray tap can
+  // never change what a live viewer sees.
+  let selected = -1;
+  function setHighlight(i) {
+    if (!S.interactive) i = -1;
+    if (highlight === i) return;
+    highlight = i; bakeKey = ''; drawWheel();
+  }
+  function selectPlayer(i, fromSearch) {
+    if (!S.interactive) i = -1;
+    selected = i;
+    setHighlight(i);
+    renderLedger();
+    const tip = $('wheelTip'), p = S.pool.find((x) => x.i === i);
+    if (!p) { tip.hidden = true; return; }
+    tip.textContent = p.name + ' · ' + p.entries + (p.entries === 1 ? ' entry' : ' entries') + ' · ' + DP.oddsText(p.entries, S.total) + ' chance';
+    tip.hidden = false;
+    if (!fromSearch) {
+      const row = $('ledger').querySelector('.row.sel');
+      if (row) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // THE WHEEL (the hand-run wheel's renderer: disc baked once and rotated,
@@ -746,6 +789,7 @@ footer a { color: var(--muted); }
   }
 
   function drawLabels() {
+    labelHits = [];
     const items = layoutLabels();
     if (!items.length) return;
     // Shrink the type when rows are tight, so crowded names never overprint.
@@ -776,6 +820,11 @@ footer a { color: var(--muted); }
           nm += '…';
         }
         sl._lname = nm; sl._lnameW = cx.measureText(nm).width; sl._lcountW = cW; sl._lk = key;
+      }
+      if (sl.player >= 0) {
+        const w = sl._lnameW + sl._lcountW;
+        labelHits.push({ x0: it.side === 1 ? tx - 6 : tx - w - 6, x1: it.side === 1 ? tx + w + 6 : tx + 6,
+          y0: it.y - Math.max(9, labelGap / 2), y1: it.y + Math.max(9, labelGap / 2), player: sl.player });
       }
       if (it.side === 1) {
         cx.fillStyle = isWin ? PAL.white : PAL.text;
@@ -857,11 +906,61 @@ footer a { color: var(--muted); }
   }
 
   /** The name under the pointer, in a chip below the disc. */
+  /** A bright outline round the picked player's slice, so a thin one can still be found. */
+  function drawPicked() {
+    if (spinning || highlight < 0 || !view.n) return;
+    const seg = TAU / view.n;
+    let at = 0;
+    for (const s of view.slices) {
+      if (s.player === highlight) {
+        const a0 = -Math.PI / 2 + rot + at * seg, a1 = a0 + s.count * seg;
+        cx.save();
+        cx.beginPath(); cx.moveTo(CXp, CYp); cx.arc(CXp, CYp, R, a0, a1); cx.closePath();
+        cx.fillStyle = 'rgba(255,255,255,0.16)'; cx.fill();
+        cx.strokeStyle = '#ffffff'; cx.lineWidth = 3; cx.shadowColor = PAL.cyan; cx.shadowBlur = 16; cx.stroke();
+        cx.restore();
+        return;
+      }
+      at += s.count;
+    }
+  }
+
+  // Where each name label sits on the canvas, for taps (rebuilt every draw).
+  let labelHits = [];
+
+  /** Which player a tap at canvas point (x, y) means: a name label, else a slice. -1 for none. */
+  function playerAt(x, y) {
+    for (const h of labelHits) if (x >= h.x0 && x <= h.x1 && y >= h.y0 && y <= h.y1) return h.player;
+    const dx = x - CXp, dy = y - CYp, d = Math.sqrt(dx * dx + dy * dy);
+    if (d > R + 6 || d < Math.max(30, R * 0.21) || !view.n) return -1;
+    const a = Math.atan2(dy, dx) + Math.PI / 2 - rot;
+    const u = Math.floor((((a % TAU) + TAU) % TAU) / (TAU / view.n));
+    const s = view.slices[L.sliceAt(view, Math.min(view.n - 1, u))];
+    return s ? s.player : -1;
+  }
+  cv.style.cursor = 'pointer';
+  cv.addEventListener('click', (e) => {
+    if (!S.interactive) return;
+    const b = cv.getBoundingClientRect();
+    const i = playerAt((e.clientX - b.left) * (VW / b.width), (e.clientY - b.top) * (VH / b.height));
+    selectPlayer(i === selected ? -1 : i);
+  });
+  cv.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse' || !S.interactive) return;
+    const b = cv.getBoundingClientRect();
+    const i = playerAt((e.clientX - b.left) * (VW / b.width), (e.clientY - b.top) * (VH / b.height));
+    setHighlight(i >= 0 ? i : selected);
+  });
+  cv.addEventListener('pointerleave', () => setHighlight(selected));
+
   function drawTicker() {
     const v = view, n = v.n;
     if (!n) return;
     const u = Math.min(n - 1, Math.max(0, Math.floor((((-rot) % TAU) + TAU) % TAU / (TAU / n))));
-    const sl = v.slices[L.sliceAt(v, u)];
+    // While it spins: the name under the pointer. At rest: the player you
+    // picked (tap, search), else the name under the pointer.
+    const picked = !spinning && highlight >= 0 ? v.slices.find((s) => s.player === highlight) : null;
+    const sl = picked || v.slices[L.sliceAt(v, u)];
     if (!sl) return;
     cx.save();
     cx.font = '700 ' + (VW < 620 ? 15 : 19) + 'px "Chakra Petch", system-ui, sans-serif';
@@ -900,9 +999,10 @@ footer a { color: var(--muted); }
     cx.strokeStyle = 'rgba(192,77,255,0.32)'; cx.lineWidth = 7; cx.shadowColor = PAL.violet; cx.shadowBlur = 30; cx.stroke(); cx.restore();
     drawBulbs();
     cx.save(); cx.translate(CXp, CYp); cx.rotate(rot); cx.translate(-BK / 2, -BK / 2); cx.drawImage(bakeCv, 0, 0, BK, BK); cx.restore();
+    drawPicked();
     cx.save(); cx.beginPath(); cx.arc(CXp, CYp, R, 0, TAU);
     cx.strokeStyle = 'rgba(255,255,255,0.28)'; cx.lineWidth = 2; cx.shadowColor = PAL.cyanHi; cx.shadowBlur = 12; cx.stroke(); cx.restore();
-    if (!spinning) drawLabels();
+    if (!spinning) drawLabels(); else labelHits = [];
     drawHub(); drawPointer();
     cx.restore();
     if (spot > 0) {
@@ -917,7 +1017,7 @@ footer a { color: var(--muted); }
       cx.fillStyle = fg; cx.fillRect(0, 0, VW, VH); cx.restore();
     }
     syncDim();
-    if (spinning || narrow) drawTicker();
+    if (spinning || narrow || highlight >= 0) drawTicker();
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -1168,7 +1268,12 @@ footer a { color: var(--muted); }
     const replay = S.replayAt > 0;
     const ph = L.phaseAt(S.tl, replay ? -Infinity : S.drawAt, replay ? S.replayAt : S.spinAt, n);
     const key = ph.phase + ':' + (ph.index == null ? '' : ph.index);
-    if (key !== S.phaseKey) { S.phaseKey = key; enter(ph); }
+    if (key !== S.phaseKey) {
+      S.phaseKey = key;
+      S.interactive = ph.phase === 'countdown' || ph.phase === 'drawn' || ph.phase === 'late';
+      if (!S.interactive && (selected >= 0 || highlight >= 0)) { selectPlayer(-1); $('ledgerSearch').value = ''; query = ''; }
+      enter(ph);
+    }
 
     if (ph.phase === 'countdown') {
       lightRate = 3;
