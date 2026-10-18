@@ -409,10 +409,6 @@ footer a { color: var(--muted); }
       <div class="stub-row"><span id="stubTicket">TICKET — OF —</span><span id="stubOdds">—</span></div>
     </div>
     <div class="facts" id="winFacts"></div>
-    <div class="actions">
-      <button class="btn accent" id="winClose" type="button">Close</button>
-      <button class="btn prize" id="winReplay" type="button">&#x21BB; Replay the draw</button>
-    </div>
     <p class="thanks">Thank you for watching!</p>
     <p class="caveat">Congratulations! We&rsquo;ll email the winner from contactus@hiipointegames.com. The prize is subject to the official rules, including the 18+ and US eligibility check.</p>
   </div>
@@ -1310,7 +1306,6 @@ footer a { color: var(--muted); }
     $('win').classList.remove('thanked');
     stopParty();
   }
-  $('winClose').addEventListener('click', () => { closeWin(); if (S.landed) showWinBanner(); });
   // A replay plays the same timeline from now, on this screen only. It is
   // labelled "Replay" while it runs and lands on the same, recorded winner.
   function replay() {
@@ -1320,7 +1315,6 @@ footer a { color: var(--muted); }
     S.replayAt = now() + 1500; S.phaseKey = ''; riserFor = -1;
     view = S.tl.spins[0].view; rot = 0; hot = -1; bakeKey = '';
   }
-  $('winReplay').addEventListener('click', replay);
   $('replayBtn').addEventListener('click', replay);
   addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeWin();
