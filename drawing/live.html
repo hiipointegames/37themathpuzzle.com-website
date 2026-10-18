@@ -952,6 +952,18 @@ footer a { color: var(--muted); }
     setHighlight(i >= 0 ? i : selected);
   });
   cv.addEventListener('pointerleave', () => setHighlight(selected));
+  // A click anywhere else on the page lets go of the pick. The wheel (which
+  // picks a wedge or, on empty space, clears), the player rows and the search
+  // box handle their own clicks.
+  document.addEventListener('click', (e) => {
+    if (selected < 0 && highlight < 0) return;
+    // composedPath(), not closest(): a row tap re-renders the list, so by now
+    // the tapped row is detached and closest() would no longer find #ledger.
+    const path = e.composedPath ? e.composedPath() : [e.target];
+    if (path.some((n) => n.id === 'wheel' || n.id === 'ledger' || n.id === 'ledgerSearch')) return;
+    if ($('ledgerSearch').value) { $('ledgerSearch').value = ''; query = ''; }
+    selectPlayer(-1);
+  });
 
   function drawTicker() {
     const v = view, n = v.n;
