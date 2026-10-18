@@ -63,7 +63,8 @@
   var MAX_STAGES = 5;
   var LATE_AFTER_MS = 150000;    // no result 2.5 min after 9pm: say it's running late
   var SHOW_MS = 60000;           // 9:00:00 to 9:01:00 ET: the randomizer + the thank-you
-  var SLIDES_AT = [0, 6000, 24000, 42000];   // intro, then three thank-you slides of 18 s
+  var SLIDES_AT = [0, 8000, 22000, 36000];   // intro 8 s, then three thank-you slides of 14 s
+  var COUNTDOWN_MS = 10000;      // ...then a full-screen 10 → 0 countdown into the spin
   var REVEAL_MS = 7000;          // the winner card stays up this long, then closes itself
   var THANKS_AT = 3800;          // ...and says "thank you for watching" this far in
 
@@ -280,6 +281,16 @@
     return { phase: 'drawn' };
   }
 
+  /**
+   * The big countdown in the last 10 s before the spin: the number to show
+   * (10 … 1), or 0 when it is not countdown time. `msLeft` is ms to the spin.
+   * The thank-you slides finish before it starts, so it never covers them.
+   */
+  function countdownAt(msLeft) {
+    if (!(msLeft > 0) || msLeft > COUNTDOWN_MS) return 0;
+    return Math.ceil(msLeft / 1000);
+  }
+
   /** Which message the show is on, `el` ms after 9pm: 0 = the randomizer, 1–3 = the thank-you. */
   function slideAt(el) {
     var i = 0;
@@ -302,6 +313,7 @@
     singleView: singleView, sliceAt: sliceAt, timeline: timeline, spinTarget: spinTarget,
     rotationAt: rotationAt, phaseAt: phaseAt, slideAt: slideAt, clockText: clockText,
     SINGLE_MS: SINGLE_MS, WINDUP_MS: WINDUP_MS, LATE_AFTER_MS: LATE_AFTER_MS,
-    SHOW_MS: SHOW_MS, REVEAL_MS: REVEAL_MS, THANKS_AT: THANKS_AT,
+    SHOW_MS: SHOW_MS, REVEAL_MS: REVEAL_MS, THANKS_AT: THANKS_AT, COUNTDOWN_MS: COUNTDOWN_MS,
+    countdownAt: countdownAt,
   };
 });

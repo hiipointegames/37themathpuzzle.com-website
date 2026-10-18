@@ -165,16 +165,28 @@ test('phases: countdown, the show, spin, reveal, drawn', () => {
   assert.strictEqual(L.phaseAt(tl, -Infinity, spinAt, spinAt + 100).phase, 'spinning');
 });
 
-test('the show: the randomizer, then three thank-you slides, then the spin at 9:01', () => {
+test('the show: the randomizer, three 14 s thank-you slides, a 10 s countdown, the spin at 9:01', () => {
   assert.strictEqual(L.SHOW_MS, 60000);
   assert.strictEqual(L.slideAt(0), 0);
-  assert.strictEqual(L.slideAt(5999), 0);
-  assert.strictEqual(L.slideAt(6000), 1);
-  assert.strictEqual(L.slideAt(23999), 1);
-  assert.strictEqual(L.slideAt(24000), 2);
-  assert.strictEqual(L.slideAt(42000), 3);
-  assert.strictEqual(L.slideAt(59999), 3);
+  assert.strictEqual(L.slideAt(7999), 0);
+  assert.strictEqual(L.slideAt(8000), 1);
+  assert.strictEqual(L.slideAt(21999), 1);
+  assert.strictEqual(L.slideAt(22000), 2);
+  assert.strictEqual(L.slideAt(36000), 3);
+  // the last slide ends exactly where the countdown begins: nothing is cut off
+  assert.strictEqual(36000 + 14000, L.SHOW_MS - L.COUNTDOWN_MS);
   assert.ok(L.THANKS_AT < L.REVEAL_MS && L.REVEAL_MS >= 5000 && L.REVEAL_MS <= 7000);
+});
+
+test('the countdown: 10 … 1 over the last 10 s, nothing before or after', () => {
+  assert.strictEqual(L.countdownAt(10001), 0);
+  assert.strictEqual(L.countdownAt(10000), 10);
+  assert.strictEqual(L.countdownAt(9001), 10);
+  assert.strictEqual(L.countdownAt(9000), 9);
+  assert.strictEqual(L.countdownAt(1), 1);
+  assert.strictEqual(L.countdownAt(0), 0);
+  assert.strictEqual(L.countdownAt(-5), 0);
+  assert.strictEqual(L.countdownAt(undefined), 0);
 });
 
 test('phases: a staged draw pauses between spins', () => {

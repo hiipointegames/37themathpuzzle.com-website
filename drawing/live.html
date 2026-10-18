@@ -229,6 +229,70 @@ a { color: var(--cyan); }
 .winbanner .wb-label { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: var(--step--1); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-hi); }
 .winbanner .wb-name { font-family: 'Chakra Petch', system-ui, sans-serif; font-weight: 700; font-size: var(--step-2); color: var(--gold); text-shadow: 0 0 18px rgba(255,207,58,0.6); overflow-wrap: anywhere; }
 .winbanner .wb-sub { font-size: var(--step--1); color: var(--gold-mid); }
+/* "Tap anywhere for music": browsers allow sound only after a tap. */
+.tapmusic {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 57;
+  font: 700 var(--step-0) 'Chakra Petch', system-ui, sans-serif; letter-spacing: 0.06em; color: #07021a;
+  padding: 12px 22px; border: 0; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  background: linear-gradient(135deg, var(--gold-hi), var(--gold) 55%, #ff9f1a);
+  box-shadow: 0 0 22px rgba(255,207,58,0.55), 0 8px 24px rgba(0,0,0,0.5);
+  animation: tapPulse 1.8s ease-in-out infinite;
+}
+@keyframes tapPulse { 50% { transform: translateX(-50%) scale(1.06); box-shadow: 0 0 34px rgba(255,207,58,0.85), 0 8px 24px rgba(0,0,0,0.5); } }
+@media (prefers-reduced-motion: reduce) { .tapmusic { animation: none; } }
+
+/* ── THE BIG COUNTDOWN: the last 10 s before the spin, full screen ──
+   Only transform/opacity animate (cheap on phones); clicks pass through. */
+.bigcount {
+  position: fixed; inset: 0; z-index: 58; display: grid; place-items: center; pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(4,3,14,0.72), rgba(4,3,14,0.92) 70%);
+  opacity: 0; transition: opacity 0.4s ease;
+}
+.bigcount.on { opacity: 1; }
+.bc-box { position: relative; width: min(64vmin, 460px); aspect-ratio: 1; display: grid; place-items: center; }
+.bc-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.bc-ring circle { fill: none; stroke-width: 6; }
+.bc-ring .track { stroke: rgba(180,160,255,0.18); }
+.bc-ring .sweep, .bc-ring .glow { stroke-linecap: round; stroke-dasharray: 289; stroke-dashoffset: 0; }
+.bc-ring .sweep { stroke: var(--gold); }
+.bc-ring .glow { stroke: rgba(255,207,58,0.28); stroke-width: 14; }   /* a soft glow without a CSS filter (filters made a visible box) */
+.bigcount.tick .sweep, .bigcount.tick .glow { animation: sweep 1s linear forwards; }
+@keyframes sweep { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 289; } }
+.bc-num {
+  font-family: 'Chakra Petch', system-ui, sans-serif; font-weight: 700; line-height: 1;
+  font-size: min(34vmin, 250px); font-variant-numeric: tabular-nums;
+  color: var(--cyan-hi); text-shadow: 0 0 30px rgba(34,245,255,0.8), 0 0 90px rgba(192,77,255,0.6);
+}
+.bigcount.tick .bc-num { animation: bcPop 1s cubic-bezier(.2,.9,.3,1) both; }
+.bigcount.hot .bc-num { color: var(--gold); text-shadow: 0 0 34px rgba(255,207,58,0.9), 0 0 110px rgba(255,61,216,0.6); }
+@keyframes bcPop { 0% { transform: scale(1.6); opacity: 0; } 18% { transform: scale(0.94); opacity: 1; } 30% { transform: scale(1); } 85% { opacity: 1; } 100% { transform: scale(0.82); opacity: 0.15; } }
+.bc-label { position: absolute; bottom: -2.4em; left: 50%; transform: translateX(-50%); white-space: nowrap;
+  font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: var(--step-0); letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold-hi); }
+/* the screen edge pulses on the last three */
+.bigcount.hot::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 120px rgba(255,61,216,0.45); animation: edge 1s ease-out infinite; }
+@keyframes edge { from { opacity: 1; } to { opacity: 0.15; } }
+
+/* ── reveal flair: turning light rays behind the card, a shine across the stub ── */
+.rays {
+  position: fixed; left: 50%; top: 46%; width: 170vmax; height: 170vmax; margin: -85vmax 0 0 -85vmax; pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, rgba(255,207,58,0.13) 0deg 7deg, transparent 7deg 22deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,0.5) 30%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,0.5) 30%, transparent 62%);
+  opacity: 0; transition: opacity 0.8s ease; will-change: transform;
+}
+.takeover.on .rays { opacity: 1; animation: rays 18s linear infinite; }
+@keyframes rays { to { transform: rotate(360deg); } }
+.stub .shine { position: absolute; inset: 0; border-radius: 16px; overflow: hidden; pointer-events: none; }
+.stub .shine::before {
+  content: ''; position: absolute; top: -20%; bottom: -20%; width: 28%; left: -40%;
+  background: linear-gradient(100deg, transparent, rgba(255,247,194,0.55), transparent); transform: skewX(-18deg);
+}
+.win[data-beat="2"] .stub .shine::before { animation: shine 2.4s 0.2s ease-in-out infinite; }
+@keyframes shine { 0% { left: -40%; } 60%, 100% { left: 130%; } }
+@media (prefers-reduced-motion: reduce) {
+  .bigcount.tick .bc-num, .bigcount.tick .sweep, .bigcount.hot::after, .takeover.on .rays, .win[data-beat="2"] .stub .shine::before { animation: none; }
+}
+
 .win .thanks { margin-top: 18px; font-family: 'Chakra Petch', system-ui, sans-serif; font-weight: 700; font-size: var(--step-2); color: var(--cyan-hi); text-shadow: 0 0 20px rgba(34,245,255,0.55); opacity: 0; transform: translateY(10px); transition: opacity 0.6s ease, transform 0.6s ease; }
 .win.thanked .thanks { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .msg-anim, .winbanner { animation: none; } .msg-body .dots::after { animation: none; width: 1.2em; } }
@@ -408,11 +472,27 @@ footer a { color: var(--muted); }
 <div class="ring" id="ring" aria-hidden="true"></div>
 <div class="flash" id="flash" aria-hidden="true"></div>
 
+<button class="tapmusic" id="tapForMusic" type="button">&#x1F3B5; Tap anywhere for music</button>
+
+<div class="bigcount" id="bigCount" aria-live="off">
+  <div class="bc-box">
+    <svg class="bc-ring" viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="track" cx="50" cy="50" r="46"></circle>
+      <circle class="glow" cx="50" cy="50" r="46"></circle>
+      <circle class="sweep" cx="50" cy="50" r="46"></circle>
+    </svg>
+    <span class="bc-num" id="bcNum"></span>
+    <span class="bc-label">The wheel spins in</span>
+  </div>
+</div>
+
 <div class="takeover" id="takeover" role="dialog" aria-modal="true" aria-labelledby="winName">
+  <div class="rays" aria-hidden="true"></div>
   <div class="beam" aria-hidden="true"></div>
   <div class="win" id="win" data-beat="0">
     <div class="crown">The winner is</div>
     <div class="stub">
+      <span class="shine" aria-hidden="true"></span>
       <div class="stub-row"><span>$37 · Weekly prize draw</span><span id="stubDate">—</span></div>
       <div class="name" id="winName">—</div>
       <div class="stub-row"><span id="stubTicket">TICKET — OF —</span><span id="stubOdds">—</span></div>
@@ -425,6 +505,7 @@ footer a { color: var(--muted); }
 
 <script src="/drawing/drawPool.js"></script>
 <script src="/drawing/liveDraw.js"></script>
+<script src="/drawing/showMusic.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1075,23 +1156,34 @@ footer a { color: var(--muted); }
       o.connect(g); g.connect(out()); o.start(t); o.stop(t + 0.09);
     } catch (_) {}
   }
-  function applause(startAt, dur = 3.6) {
+  // A crowd clapping. The claps are created just in time, a few at a time
+  // (each ~0.1 s for the next 0.25 s), instead of all at once: building 280
+  // audio nodes in one go was the stutter in the old reveal.
+  function applause(startAt, dur = 3.4, total = 180) {
     if (muted) return;
     try {
       const a = audio(), dest = out(), buf = noiseBuffer();
-      for (let i = 0; i < 280; i++) {
-        const k = Math.pow(Math.random(), 1.5), t = startAt + dur * k;
-        const env = Math.min(1, (k * dur) / 0.35) * (1 - k * k);
-        const nz = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain();
-        const pan = a.createStereoPanner ? a.createStereoPanner() : null;
-        nz.buffer = buf; bp.type = 'bandpass'; bp.Q.value = 1.3; bp.frequency.value = 900 + Math.random() * 1600;
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.03 + 0.09 * env * Math.random() + 0.0002, t + 0.002);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.012 + Math.random() * 0.016);
-        nz.connect(bp); bp.connect(g);
-        if (pan) { pan.pan.value = Math.random() * 1.6 - 0.8; g.connect(pan); pan.connect(dest); } else g.connect(dest);
-        nz.start(t, Math.random() * 2); nz.stop(t + 0.04);
-      }
+      const times = Array.from({ length: total }, () => Math.pow(Math.random(), 1.5)).sort((x, y) => x - y);
+      let i = 0;
+      const feed = () => {
+        try {
+          while (i < times.length && startAt + dur * times[i] < a.currentTime + 0.25) {
+            const k = times[i++], t = Math.max(a.currentTime + 0.01, startAt + dur * k);
+            const env = Math.min(1, (k * dur) / 0.35) * (1 - k * k);
+            const nz = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain();
+            const pan = a.createStereoPanner ? a.createStereoPanner() : null;
+            nz.buffer = buf; bp.type = 'bandpass'; bp.Q.value = 1.3; bp.frequency.value = 900 + Math.random() * 1600;
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(0.025 + 0.07 * env * Math.random() + 0.0002, t + 0.002);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.012 + Math.random() * 0.016);
+            nz.connect(bp); bp.connect(g);
+            if (pan) { pan.pan.value = Math.random() * 1.6 - 0.8; g.connect(pan); pan.connect(dest); } else g.connect(dest);
+            nz.start(t, Math.random() * 0.8); nz.stop(t + 0.04);
+          }
+        } catch (_) { i = times.length; }
+        if (i < times.length && !muted) setTimeout(feed, 100);
+      };
+      feed();
     } catch (_) {}
   }
   function tick(slow = 0) {
@@ -1160,7 +1252,56 @@ footer a { color: var(--muted); }
         sg.gain.setValueAtTime(0.0001, st); sg.gain.exponentialRampToValueAtTime(0.05 / (i + 1), st + 0.3); sg.gain.exponentialRampToValueAtTime(0.0001, st + 3.4);
         so.connect(sg); sg.connect(out()); so.start(st); so.stop(st + 3.5);
       });
-      applause(t + 0.18);
+      // (the applause is its own cue now, a beat later: see the reveal cues)
+    } catch (_) {}
+  }
+
+  // ── The music (drawing/showMusic.js) plays the whole time the page is open
+  // (David, 2026-10-18): a laid-back groove before the show, building under
+  // the message and the countdown, stripped back to a tense pulse under the
+  // spin, full tilt with the guitar under the reveal, and on after. The frame
+  // loop asks for the right mix every frame; musicOn() only changes what
+  // differs. Browsers allow sound only after the viewer's first tap.
+  let music = null;
+  function musicOn(k, level, mode) {
+    if (muted || document.hidden || !window.ShowMusic) return;
+    try {
+      if (!music) music = window.ShowMusic.create(audio(), out());
+      music.setMode(mode || 'full');
+      if (!music.playing) music.start(k, level);
+      else { music.setIntensity(k); music.setLevel(level, 0.5); }
+    } catch (_) {}
+  }
+  function musicOff(fade) { if (music) music.stop(fade); }
+  // A hidden tab's timers are throttled, which would stutter the music: let
+  // it go quiet in the background and pick it back up on return.
+  document.addEventListener('visibilitychange', () => { if (document.hidden) musicOff(0.2); });
+
+  /** One second of the big countdown: a low boom and a blip that climbs. */
+  function countBeep(n) {
+    if (muted) return;
+    try {
+      const a = audio(), t = a.currentTime;
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.3);
+      g.gain.setValueAtTime(n <= 3 ? 0.6 : 0.4, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+      o.connect(g); g.connect(out()); o.start(t); o.stop(t + 0.5);
+      const b = a.createOscillator(), bg = a.createGain();
+      b.type = 'triangle'; b.frequency.value = 440 * Math.pow(2, (10 - n) / 12) * (n <= 3 ? 2 : 1);
+      bg.gain.setValueAtTime(0.0001, t); bg.gain.exponentialRampToValueAtTime(0.16, t + 0.01); bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+      b.connect(bg); bg.connect(out()); b.start(t); b.stop(t + 0.25);
+    } catch (_) {}
+  }
+
+  /** The launch: a cymbal crash as the countdown hits zero. */
+  function crash() {
+    if (muted) return;
+    try {
+      const a = audio(), t = a.currentTime;
+      const nz = a.createBufferSource(), hp = a.createBiquadFilter(), g = a.createGain();
+      nz.buffer = noiseBuffer(); hp.type = 'highpass'; hp.frequency.value = 3200;
+      g.gain.setValueAtTime(0.32, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+      nz.connect(hp); hp.connect(g); g.connect(out()); nz.start(t); nz.stop(t + 1.7);
     } catch (_) {}
   }
 
@@ -1172,15 +1313,34 @@ footer a { color: var(--muted); }
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !muted) holdAwake(); });
 
-  function setSound(on) {
+  function setSound(on, remember) {
     muted = !on;
     if (on) { try { audio().resume(); } catch (_) {} holdAwake(); }
+    else musicOff(0.3);
     const b = $('soundBtn');
     b.innerHTML = on ? '&#x1F50A; Sound on' : '&#x1F507; Sound off';
     b.classList.toggle('on', on); b.classList.remove('ask');
     b.setAttribute('aria-pressed', String(on));
+    $('tapForMusic').hidden = true;
+    if (remember) { try { localStorage.setItem('drawing-live-sound', on ? 'on' : 'off'); } catch (_) {} }
   }
-  $('soundBtn').addEventListener('click', () => setSound(muted));
+  $('soundBtn').addEventListener('click', () => setSound(muted, true));
+  // The first tap anywhere turns the music on, unless this viewer switched it
+  // off before. (Browsers will not play sound before a tap; this is the
+  // closest a page can get to "always on".)
+  let soundPref = null;
+  try { soundPref = localStorage.getItem('drawing-live-sound'); } catch (_) {}
+  if (soundPref === 'off') $('tapForMusic').hidden = true;
+  // Listen on pointerdown, touchend and click: some iPhones only unlock audio
+  // on the latter two. Keep listening until the audio is actually running.
+  const UNLOCK = ['pointerdown', 'touchend', 'click'];
+  function firstTap(e) {
+    if (e.target.closest && e.target.closest('#soundBtn')) return;   // the button handles itself
+    if (soundPref === 'off') { UNLOCK.forEach((t) => document.removeEventListener(t, firstTap, true)); return; }
+    if (muted) setSound(true); else { try { audio().resume(); } catch (_) {} }
+    try { if (audio().state === 'running') UNLOCK.forEach((t) => document.removeEventListener(t, firstTap, true)); } catch (_) {}
+  }
+  UNLOCK.forEach((t) => document.addEventListener(t, firstTap, true));
   $('fsBtn').addEventListener('click', () => {
     if (document.fullscreenElement) document.exitFullscreen();
     else (document.documentElement.requestFullscreen ? document.documentElement.requestFullscreen() : Promise.reject()).catch(() => {});
@@ -1228,10 +1388,25 @@ footer a { color: var(--muted); }
   }
   function hideSlide() { if (msgShown !== -1) { msgShown = -1; $('message').classList.remove('on'); } }
 
+  // ── The big countdown: drawn only when the number changes ──
+  let bigShown = 0;
+  function showCount(n) {
+    if (n === bigShown) return;
+    const box = $('bigCount');
+    if (!n) { bigShown = 0; box.classList.remove('on', 'tick', 'hot'); return; }
+    bigShown = n;
+    $('bcNum').textContent = String(n);
+    box.classList.add('on');
+    box.classList.toggle('hot', n <= 3);
+    box.classList.remove('tick'); void box.offsetWidth; box.classList.add('tick');   // restart the pop + ring
+    countBeep(n);
+  }
+
   function enter(ph) {
     const sp = ph.spin;
-    if (ph.phase !== 'show') hideSlide();
+    if (ph.phase !== 'show') { hideSlide(); showCount(0); }
     if (ph.phase === 'spinning') {
+      if (ph.index === 0 && ph.el < 1500) crash();    // the music drops to its tense mix (see musicFor)
       closeWin(); $('winBanner').hidden = true;
       if (view !== sp.view) { view = sp.view; bakeKey = ''; }
       hot = -1; spinning = true; spot = 0; spotFade = false;
@@ -1255,10 +1430,12 @@ footer a { color: var(--muted); }
     } else if (ph.phase === 'reveal') {
       land();
       openCard(ph.el);
+      // (the music comes back under the card as one of the reveal cues)
     } else if (ph.phase === 'drawn') {
       land();
       closeWin();
       showWinBanner();
+
     }
   }
 
@@ -1293,10 +1470,14 @@ footer a { color: var(--muted); }
       setChip('live', ph.msLeft < 3600000 ? 'Live in ' + Math.ceil(ph.msLeft / 60000) + ' min' : 'Live tonight');
     } else if (ph.phase === 'show') {
       lightRate = 6;
-      showSlide(L.slideAt(ph.el));
+      // The slides, then (last 10 s) the full-screen countdown. The music
+      // starts with the show and builds through the countdown.
+      const n = L.countdownAt(ph.msLeft);
+      if (n) { hideSlide(); showCount(n); } else { showCount(0); showSlide(L.slideAt(ph.el)); }
+
       showBar('hot', 'Live now · the wheel spins in', L.clockText(ph.msLeft), 'Every screen spins together at 8:01pm CT');
       setChip('live', 'Live now');
-      if (ph.msLeft < 8000) drum(dt, 1 - ph.msLeft / 8000, 0.12);   // the roll builds in the last 8 s
+      if (ph.msLeft < 3500) drum(dt, 1 - ph.msLeft / 3500, 0.12);   // a snare roll over the last three counts
     } else if (ph.phase === 'waiting') {
       lightRate = 10;
       showBar('hot', replay ? 'Replay' : 'Live now', replay ? 'Here we go…' : 'Almost there…', replay ? '' : 'The wheel spins the moment the result is in.');
@@ -1315,8 +1496,25 @@ footer a { color: var(--muted); }
     } else if (ph.phase === 'reveal') {
       stepCard(ph.el);
     }
+    musicFor(ph);
     if (ph.phase !== 'spinning') stepFlap();
     drawWheel();
+  }
+
+  /** The music's mix for each moment of the show: [intensity, volume, mode]. */
+  function musicFor(ph) {
+    switch (ph.phase) {
+      case 'countdown': return musicOn(0.3, 0.38);                       // laid back while people arrive
+      case 'show': {
+        const n = L.countdownAt(ph.msLeft);
+        return n ? musicOn(0.55 + 0.45 * (1 - ph.msLeft / L.COUNTDOWN_MS), 0.45)   // building into the spin
+                 : musicOn(0.35, 0.32);                                  // under the thank-you
+      }
+      case 'waiting': case 'late': return musicOn(0.5, 0.36);
+      case 'spinning': case 'pause': return musicOn(0.4, 0.26, 'tension'); // the drumroll and clicks lead
+      case 'reveal': return musicOn(1, ph.el < 2400 ? 0.12 : 0.32);       // ducked under the fanfare, then up
+      default: return musicOn(0.6, 0.38);                                  // after the draw
+    }
   }
 
   /** The drumroll: soft, then building. */
@@ -1395,7 +1593,7 @@ footer a { color: var(--muted); }
   // mid-card shows it already built, without the fireworks.
   let cardFresh = false, cardBeat = -1;
   function openCard(el) {
-    cardFresh = el < 900; cardBeat = -1;
+    cardFresh = el < 900; cardBeat = -1; cuesDone = 0;
     $('win').classList.remove('thanked');
     $('win').dataset.beat = '0';
     $('takeover').classList.add('on');
@@ -1406,13 +1604,33 @@ footer a { color: var(--muted); }
     }
     stepCard(el);
   }
+  // The reveal as a sequence, not one big bang: each layer of sound and
+  // light gets its own moment, so nothing piles up in a single frame (that
+  // pile-up was the glitch, both on screen and in the speakers).
+  //   0.0 s  the wheel stops: flash, shockwave ring, thud      (openCard)
+  //   0.9 s  the name slams in, the fanfare, the corner cannons
+  //   1.4 s  the crowd starts clapping
+  //   1.8 s  confetti rain and the fireworks
+  //   2.4 s  the groove comes back in, under the card
+  //   2.8 s  the coin shower
+  //   3.8 s  "Thank you for watching!"                          (THANKS_AT)
+  const REVEAL_CUES = [
+    { at: 900, run: () => { $('party').classList.add('on'); revealSound(); startParty(); cannons(1); } },
+    { at: 1400, run: () => { try { applause(audio().currentTime + 0.05); } catch (_) {} } },
+    { at: 1800, run: () => { confettiRain(); fireworks(); } },
+    { at: 2400, run: () => {} },       // the music comes back up under the card (see musicFor)
+    { at: 2800, run: () => coinShower() },
+    { at: 4200, run: () => cannons(0.6) },
+  ];
+  let cuesDone = 0;
   function stepCard(el) {
     if (!$('takeover').classList.contains('on')) return;     // closed early by the viewer
     const beat = el < 900 ? 0 : el < 1850 ? 1 : 2;
-    if (beat !== cardBeat) {
-      if (beat >= 1 && cardBeat < 1 && cardFresh) { $('party').classList.add('on'); revealSound(); burst(); }
-      cardBeat = beat;
-      $('win').dataset.beat = String(beat);
+    if (beat !== cardBeat) { cardBeat = beat; $('win').dataset.beat = String(beat); }
+    // Fire each cue once, in order; a page that joined mid-card skips them all.
+    while (cuesDone < REVEAL_CUES.length && el >= REVEAL_CUES[cuesDone].at) {
+      const cue = REVEAL_CUES[cuesDone++];
+      if (cardFresh) cue.run();
     }
     $('win').classList.toggle('thanked', el >= L.THANKS_AT);
   }
@@ -1470,26 +1688,84 @@ footer a { color: var(--muted); }
         spin: (Math.random() - 0.5) * 0.3, rot: Math.random() * Math.PI, kind: 'confetti' });
     }
   }
-  function burst() {
+  // ── More flair for the reveal, on a budget ──
+  // Gold "$" coins raining down and confetti cannons from both bottom corners,
+  // on top of the fireworks. Every particle is a cheap blit or rect, phones get
+  // half as many, and MAX_PARTS caps the screen so it can never bog down.
+  const SMALL = innerWidth < 640;
+  const MAX_PARTS = SMALL ? 380 : 750;
+  const room = () => Math.max(0, MAX_PARTS - parts.length);
+  let coinSprite = null;
+  function coinImg() {
+    if (coinSprite) return coinSprite;
+    const S = 48, c = document.createElement('canvas'); c.width = S; c.height = S;
+    const g = c.getContext('2d');
+    const rg = g.createRadialGradient(S * 0.38, S * 0.34, 2, S / 2, S / 2, S / 2);
+    rg.addColorStop(0, '#fff7c2'); rg.addColorStop(0.45, '#ffcf3a'); rg.addColorStop(1, '#b9790f');
+    g.fillStyle = rg; g.beginPath(); g.arc(S / 2, S / 2, S / 2 - 1, 0, TAU); g.fill();
+    g.strokeStyle = 'rgba(122,74,0,0.7)'; g.lineWidth = 2.5; g.beginPath(); g.arc(S / 2, S / 2, S / 2 - 5, 0, TAU); g.stroke();
+    g.fillStyle = '#7a4a00'; g.font = '700 28px "Chakra Petch", system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('$', S / 2, S / 2 + 1);
+    return (coinSprite = c);
+  }
+  function coins(n) {
+    n = Math.min(n, room());
+    for (let i = 0; i < n; i++) {
+      parts.push({ x: Math.random() * innerWidth, y: -40 - Math.random() * innerHeight * 0.6, vx: (Math.random() - 0.5) * 1.2, vy: 2.2 + Math.random() * 2.8,
+        life: 1, decay: 0.0026 + Math.random() * 0.002, size: 16 + Math.random() * 14, rot: Math.random() * TAU, spin: 0.08 + Math.random() * 0.12, kind: 'coin' });
+    }
+  }
+  function cannon(fromLeft, n) {
+    n = Math.min(n, room());
+    const x0 = fromLeft ? -10 : innerWidth + 10, y0 = innerHeight + 10;
+    for (let i = 0; i < n; i++) {
+      const a = (fromLeft ? -Math.PI / 2 + 0.25 : -Math.PI / 2 - 0.25) + (fromLeft ? 1 : -1) * Math.random() * 0.55;
+      const s = 11 + Math.random() * 9;
+      parts.push({ x: x0, y: y0, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, decay: 0.004 + Math.random() * 0.003,
+        size: 4 + Math.random() * 6, color: (Math.random() < 0.5 ? GOLDS : NEONS)[(Math.random() * 4) | 0],
+        spin: (Math.random() - 0.5) * 0.4, rot: Math.random() * Math.PI, kind: 'cannon' });
+    }
+  }
+  // The celebration in waves (fired by REVEAL_CUES), each one small enough to
+  // build in a single frame without a hitch. `k` scales for phones and
+  // reduced motion; room() keeps the screen under MAX_PARTS.
+  const partyScale = () => (reduced ? 0.25 : SMALL ? 0.5 : 1);
+  function startParty() {
     partyOn = true; parts = [];
-    confetti(reduced ? 40 : 170);
-    const shots = reduced ? 3 : 13;
-    for (let i = 0; i < shots; i++) setTimeout(() => { if (partyOn) firework(innerWidth * (0.12 + Math.random() * 0.76), innerHeight * (0.14 + Math.random() * 0.46)); }, i * 290);
-    if (!reduced) setTimeout(() => { if (!partyOn) return; confetti(110); for (let i = 0; i < 6; i++) setTimeout(() => partyOn && firework(innerWidth * Math.random(), innerHeight * 0.35 * Math.random() + 60), i * 330); }, 4200);
     cancelAnimationFrame(partyRaf); partyRaf = requestAnimationFrame(stepParty);
   }
+  function cannons(strength) {
+    if (!partyOn) return;
+    const n = Math.round(80 * strength * partyScale());
+    cannon(true, n);
+    setTimeout(() => partyOn && cannon(false, n), 120);    // the right one a beat after the left
+  }
+  function confettiRain() { if (partyOn) confetti(Math.round(130 * partyScale())); }
+  function fireworks() {
+    const shots = reduced ? 3 : SMALL ? 6 : 10;
+    for (let i = 0; i < shots; i++) setTimeout(() => { if (partyOn && room() > 60) firework(innerWidth * (0.12 + Math.random() * 0.76), innerHeight * (0.14 + Math.random() * 0.46)); }, i * 340);
+  }
+  function coinShower() { if (partyOn) coins(Math.round(60 * partyScale())); }
   function stepParty() {
     pcx.clearRect(0, 0, innerWidth, innerHeight);
-    pcx.globalCompositeOperation = 'lighter';
     for (let i = parts.length - 1; i >= 0; i--) {
       const p = parts[i];
       p.x += p.vx; p.y += p.vy; p.life -= p.decay;
       if (p.kind === 'spark') { p.vy += 0.045; p.vx *= 0.988; p.vy *= 0.988; }
+      else if (p.kind === 'cannon') { p.vy += 0.22; p.vx *= 0.985; p.rot += p.spin; }
+      else if (p.kind === 'coin') { p.vy += 0.02; p.rot += p.spin; }
       else { p.vy += 0.012; p.vx += Math.sin((p.y + p.rot * 40) / 44) * 0.045; p.rot += p.spin; }
       if (p.life <= 0 || p.y > innerHeight + 60) { parts[i] = parts[parts.length - 1]; parts.pop(); continue; }
       pcx.globalAlpha = Math.max(0, Math.min(1, p.life));
-      if (p.kind === 'spark') { const d = p.size * 5; pcx.drawImage(glowSprite(p.color), p.x - d / 2, p.y - d / 2, d, d); }
-      else { pcx.fillStyle = p.color; pcx.save(); pcx.translate(p.x, p.y); pcx.rotate(p.rot); pcx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size * 0.55); pcx.restore(); }
+      if (p.kind === 'spark') {
+        pcx.globalCompositeOperation = 'lighter';
+        const d = p.size * 5; pcx.drawImage(glowSprite(p.color), p.x - d / 2, p.y - d / 2, d, d);
+        pcx.globalCompositeOperation = 'source-over';
+      } else if (p.kind === 'coin') {
+        // a coin flipping: squash it horizontally with its spin
+        const w = p.size * Math.max(0.12, Math.abs(Math.cos(p.rot)));
+        pcx.drawImage(coinImg(), p.x - w / 2, p.y - p.size / 2, w, p.size);
+      } else { pcx.fillStyle = p.color; pcx.save(); pcx.translate(p.x, p.y); pcx.rotate(p.rot); pcx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size * 0.55); pcx.restore(); }
     }
     pcx.globalAlpha = 1; pcx.globalCompositeOperation = 'source-over';
     if (partyOn) partyRaf = requestAnimationFrame(stepParty); else pcx.clearRect(0, 0, innerWidth, innerHeight);
