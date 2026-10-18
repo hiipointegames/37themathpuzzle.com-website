@@ -21,6 +21,10 @@
       "destination": "/drawing/index.html"
     },
     {
+      "source": "/drawing/live",
+      "destination": "/drawing/live.html"
+    },
+    {
       "source": "/draw",
       "destination": "/drawing/index.html"
     },

@@ -221,6 +221,7 @@
 
 <script src="/drawing/drawPool.js"></script>
 <script src="/drawing/sound.js"></script>
+<script src="/drawing/liveDraw.js"></script>
 <script>
 (function () {
   'use strict';
@@ -1020,14 +1021,28 @@
     renderRows();
   }
 
+  // On a drawing Sunday, once the week is locked, this page hands over to the
+  // live draw (/drawing/live), which spins itself at 9:00pm ET. It hands back
+  // on Monday. "/drawing?week" stays here, for anyone who wants the plain list.
+  function goLiveIfSunday(pool, offsetMs) {
+    if (!window.LiveDraw || /[?&]week\b/.test(location.search)) return false;
+    if (!window.LiveDraw.isLiveDay(pool, Date.now() + offsetMs)) return false;
+    location.replace('/drawing/live');
+    return true;
+  }
+
   function load() {
+    var sent = Date.now();
     fetch(SOURCE.url + '/rest/v1/rpc/get_contest_pool', {
       method: 'POST',
       headers: { apikey: SOURCE.key, 'Content-Type': 'application/json' },
       body: '{}',
     })
       .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-      .then(render)
+      .then(function (pool) {
+        var offset = window.LiveDraw ? window.LiveDraw.clockOffset(pool.serverNow, sent, Date.now()) : 0;
+        if (!goLiveIfSunday(pool, offset)) render(pool);
+      })
       .catch(function () {
         $('range').textContent = '';
         show('stats', false); show('winner', false); show('updated', false); show('find', false);
