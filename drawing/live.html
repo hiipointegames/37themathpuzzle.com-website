@@ -672,10 +672,12 @@ footer a { color: var(--muted); }
         ex: CXp + cosA * (R + 16), ey: CYp + sinA * (R + 16), y: CYp + sinA * (R + 16) });
       i0 += sl.count;
     });
-    const GAP = 21;
     for (const side of [1, -1]) {
       const col = out.filter((o) => o.side === side).sort((a, b) => a.y - b.y);
       if (!col.length) continue;
+      // Tighter rows when one side is crowded (most small players sit together),
+      // so the last names are not pushed off the bottom of the canvas.
+      const GAP = Math.max(13, Math.min(21, (VH - 44) / col.length));
       for (let i = 1; i < col.length; i++) if (col[i].y - col[i - 1].y < GAP) col[i].y = col[i - 1].y + GAP;
       const overflow = col[col.length - 1].y - (VH - 22);
       if (overflow > 0) {
