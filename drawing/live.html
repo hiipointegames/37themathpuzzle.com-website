@@ -506,6 +506,7 @@ footer a { color: var(--muted); }
 <script src="/drawing/drawPool.js"></script>
 <script src="/drawing/liveDraw.js"></script>
 <script src="/drawing/showMusic.js"></script>
+<script src="/drawing/fileMusic.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1262,11 +1263,14 @@ footer a { color: var(--muted); }
   // spin, full tilt with the guitar under the reveal, and on after. The frame
   // loop asks for the right mix every frame; musicOn() only changes what
   // differs. Browsers allow sound only after the viewer's first tap.
+  // The FL Studio loops (drawing/fileMusic.js) play when they have loaded by
+  // the first tap; otherwise the code-written ShowMusic plays, as before.
   let music = null;
+  try { if (window.FileMusic) window.FileMusic.preload(audio()); } catch (_) {}
   function musicOn(k, level, mode) {
     if (muted || document.hidden || !window.ShowMusic) return;
     try {
-      if (!music) music = window.ShowMusic.create(audio(), out());
+      if (!music) music = (window.FileMusic && window.FileMusic.create(audio(), out())) || window.ShowMusic.create(audio(), out());
       music.setMode(mode || 'full');
       if (!music.playing) music.start(k, level);
       else { music.setIntensity(k); music.setLevel(level, 0.5); }
