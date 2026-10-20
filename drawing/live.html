@@ -598,7 +598,12 @@ footer a { color: var(--muted); }
     }
     const first = !S.raw;
     S.raw = json;
-    if (first) {
+    // The answer carrying the winner is the pool the ticket belongs to (the
+    // server serves a drawn week's frozen hat). If it differs from the one the
+    // wheel was built from (a player deleted or renamed meanwhile), rebuild
+    // from it so the spin lands under the right name.
+    const rebuild = first || (json.winner && !S.tl && !L.samePool(S.pool, json.players));
+    if (rebuild) {
       S.pool = L.ticketPool(json.players);
       S.total = L.totalOf(S.pool);
       // __DRAW_AT__ only exists when a local rehearsal server injects it (with
@@ -606,6 +611,7 @@ footer a { color: var(--muted); }
       S.drawAt = window.__DRAW_SOURCE__ && window.__DRAW_AT__ ? Date.parse(window.__DRAW_AT__) : DP.drawDeadline(json.drawing).getTime();
       renderMeta(); renderLedger();
       view = L.restingView(S.pool); rot = 0; bakeKey = '';
+      if (!first) highlight = -1;                      // a picked slice's index may now be someone else
       sizeWheel();
     }
     if (json.winner && !S.tl) adoptWinner(json.winner);

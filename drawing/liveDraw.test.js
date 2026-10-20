@@ -211,3 +211,35 @@ test('clockText', () => {
   assert.strictEqual(L.clockText(61000), '1:01');
   assert.strictEqual(L.clockText(3600000 * 9 + 26 * 60000 + 5000), '9:26:05');
 });
+
+// The page rebuilds its wheel from the answer that carries the winner when it
+// differs from the first answer (a drawn week is served as its frozen hat).
+test('samePool: same names and entries in order', () => {
+  const pool = L.ticketPool([{ name: 'a', entries: 3 }, { name: 'b', entries: 2 }]);
+  assert.strictEqual(L.samePool(pool, [{ name: 'a', entries: 3 }, { name: 'b', entries: 2 }]), true);
+});
+
+test('samePool: a rename, a re-sort, a changed count or a missing player all differ', () => {
+  const pool = L.ticketPool([{ name: 'a', entries: 3 }, { name: 'b', entries: 3 }]);
+  assert.strictEqual(L.samePool(pool, [{ name: 'Deleted player', entries: 3 }, { name: 'b', entries: 3 }]), false);
+  assert.strictEqual(L.samePool(pool, [{ name: 'b', entries: 3 }, { name: 'a', entries: 3 }]), false);
+  assert.strictEqual(L.samePool(pool, [{ name: 'a', entries: 2 }, { name: 'b', entries: 3 }]), false);
+  assert.strictEqual(L.samePool(pool, [{ name: 'a', entries: 3 }]), false);
+});
+
+test('samePool: zero-entry rows are ignored the same way ticketPool ignores them', () => {
+  const pool = L.ticketPool([{ name: 'a', entries: 3 }]);
+  assert.strictEqual(L.samePool(pool, [{ name: 'a', entries: 3 }, { name: 'z', entries: 0 }]), true);
+  assert.strictEqual(L.samePool(pool, null), false);
+});
+
+test('after a rebuild, the winner lands on their own slice (rename moved them)', () => {
+  // First answer: live order. Winner's answer: frozen order, where the ticket belongs.
+  const first = L.ticketPool([{ name: 'a', entries: 3 }, { name: 'Deleted player', entries: 3 }]);
+  const frozen = [{ name: 'Deleted player', entries: 3 }, { name: 'a', entries: 3 }];
+  const winner = { name: 'a', ticket: 4 };
+  assert.notStrictEqual(first[L.holderOf(first, 4)].name, 'a');          // the stale wheel would be wrong
+  const rebuilt = L.ticketPool(frozen);
+  assert.strictEqual(L.landingTicket(rebuilt, winner), 4);
+  assert.strictEqual(rebuilt[L.holderOf(rebuilt, 4)].name, 'a');
+});

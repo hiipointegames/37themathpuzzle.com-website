@@ -92,6 +92,22 @@
 
   function totalOf(pool) { return pool.reduce(function (s, p) { return s + p.entries; }, 0); }
 
+  /**
+   * Does `pool` (from ticketPool) hold exactly these players, names and entries
+   * in order? The page builds its wheel from the first answer it gets; the
+   * answer that carries the winner is the one the draw's ticket belongs to
+   * (the server serves the frozen hat once a week is drawn), so when the two
+   * differ the page rebuilds from the winner's answer before it spins.
+   */
+  function samePool(pool, players) {
+    var next = ticketPool(players);
+    if (next.length !== pool.length) return false;
+    for (var i = 0; i < next.length; i++) {
+      if (next[i].name !== pool[i].name || next[i].entries !== pool[i].entries) return false;
+    }
+    return true;
+  }
+
   /** Index into `pool` of the player holding ticket t (binary search). */
   function holderOf(pool, t) {
     var lo = 0, hi = pool.length - 1;
@@ -308,7 +324,7 @@
 
   return {
     clockOffset: clockOffset, etDate: etDate, isLiveDay: isLiveDay,
-    seeded: seeded, ticketPool: ticketPool, totalOf: totalOf, holderOf: holderOf,
+    seeded: seeded, ticketPool: ticketPool, totalOf: totalOf, samePool: samePool, holderOf: holderOf,
     landingTicket: landingTicket, planStages: planStages, restingView: restingView,
     singleView: singleView, sliceAt: sliceAt, timeline: timeline, spinTarget: spinTarget,
     rotationAt: rotationAt, phaseAt: phaseAt, slideAt: slideAt, clockText: clockText,
