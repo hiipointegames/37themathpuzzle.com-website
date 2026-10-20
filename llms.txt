@@ -40,7 +40,7 @@ Power Dice rules:
 - Red die must be used as an exponent, either the base or the power.
 
 Using at least 2 of the 3 Power Dice correctly is a win. Using all 3 correctly is a
-Perfect Solve, which earns a Puzzle Piece.
+Perfect Solve, which on the Challenge Daily earns a Puzzle Piece.
 
 ## Worked examples
 
@@ -59,7 +59,7 @@ Practice version with unlimited rolls.
 
 - Easy: seven white dice, no Power Dice rules. Any equation using all seven that equals 37 wins.
 - Challenge: four white dice plus three Power Dice. At least two of the three must be placed
-  correctly (a Valid Solve). Using all three also wins and earns a Puzzle Piece.
+  correctly (a Valid Solve). Using all three also wins and, on the Challenge Daily, earns a Puzzle Piece.
 - Expert: the same setup as Challenge, but all three Power Dice must be placed correctly
   (a Perfect Solve). This is the mode the weekly $37 prize draw runs on.
 
@@ -100,8 +100,8 @@ Made by: HiiPointe Games LLC, Kansas City.
 Daily Challenge - the timed shared puzzle; every player worldwide gets the same roll each day.
 Power Dice - the three coloured dice (green additive, blue multiplicative, red exponent).
 Valid Solve - reaches 37 using all seven dice with at least two Power Dice used correctly.
-Perfect Solve - reaches 37 with all three Power Dice used correctly; earns a Puzzle Piece.
-Puzzle Piece - the collectable reward for a Perfect Solve.
+Perfect Solve - reaches 37 with all three Power Dice used correctly; on the Challenge Daily it earns a Puzzle Piece.
+Puzzle Piece - the collectable reward from the Dailies: 1 for a Perfect Solve on the Challenge Daily, 2 for an Expert Daily solved in under 37 seconds.
 Easy - seven white dice, no Power Dice rules.
 Challenge - four white dice plus three Power Dice, at least two placed correctly.
 Expert - the same setup as Challenge, but all three Power Dice must be placed correctly.
