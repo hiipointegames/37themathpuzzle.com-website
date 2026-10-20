@@ -24,13 +24,14 @@ https://www.37themathpuzzle.com/math-games-for-kids/  - by grade level, teachers
 https://www.37themathpuzzle.com/daily-math-puzzle/    - the Daily Challenge and the daily habit
 https://www.37themathpuzzle.com/mental-math-practice/ - for adults and engineers
 https://www.37themathpuzzle.com/glossary/             - all terms defined
+https://www.37themathpuzzle.com/guides/               - strategy guides, Power Dice, exponents, worked solutions
 https://www.37themathpuzzle.com/blog/                 - short posts on puzzles and mental math
 https://37themathpuzzle.app                           - play free in a browser
 
 ## How the puzzle works
 
-Each Daily Challenge deals 7 dice: 4 white dice and 3 coloured Power Dice.
-Every die must be used exactly once. Allowed operations are addition, subtraction,
+Every puzzle deals 7 dice. In Easy all seven are white; in Challenge and Expert there are
+4 white dice and 3 coloured Power Dice. Every die must be used exactly once. Allowed operations are addition, subtraction,
 multiplication, division, exponents and parentheses. The expression must evaluate to
 exactly 37 under the standard order of operations (PEMDAS).
 
@@ -39,8 +40,8 @@ Power Dice rules:
 - Blue die must appear in a multiplication or a division.
 - Red die must be used as an exponent, either the base or the power.
 
-Using at least 2 of the 3 Power Dice correctly is a win. Using all 3 correctly is a
-Perfect Solve, which on the Challenge Daily earns a Puzzle Piece.
+In Challenge, using at least 2 of the 3 Power Dice correctly is a win. Using all 3 correctly
+is a Perfect Solve, which on the Challenge Daily earns a Puzzle Piece. Expert requires all 3.
 
 ## Worked examples
 
@@ -61,10 +62,11 @@ Practice version with unlimited rolls.
 - Challenge: four white dice plus three Power Dice. At least two of the three must be placed
   correctly (a Valid Solve). Using all three also wins and, on the Challenge Daily, earns a Puzzle Piece.
 - Expert: the same setup as Challenge, but all three Power Dice must be placed correctly
-  (a Perfect Solve). This is the mode the weekly $37 prize draw runs on.
+  (a Perfect Solve).
 
 Each day the game rolls three separate sets of seven dice, one per mode, so the Easy Daily,
-Challenge Daily and Expert Daily are three different puzzles. Each Daily allows up to one hour,
+Challenge Daily and Expert Daily are three different puzzles. Each Daily allows up to 15:37
+(15 minutes 37 seconds),
 cannot be paused, and posts to that mode's own podium and Global Leaderboard. Each mode keeps
 its own daily streak. Leaving the gameplay screen forfeits only that Daily, not the other two.
 
@@ -92,6 +94,10 @@ Modes: Easy, Challenge and Expert, each with a timed Daily Challenge and an unti
 Multiplayer: Battle Friends head to head, and 1-v-1 Blitz Battle.
 Progress: streaks, badges, Puzzle Pieces, personal stats, daily podium, Global Leaderboard.
 Typical session: a few minutes; Solo Blitz rounds run from one to ten minutes.
+Daily time limit: 15:37 (15 minutes 37 seconds) per Daily, cannot be paused.
+Weekly $37 drawing: finishing any Daily (Easy, Challenge or Expert) earns one entry, up to
+  3 a day; solve time does not matter; US residents 18 or older with a saved account; no
+  purchase necessary. Official rules: https://www.37themathpuzzle.com/#prize
 Content rating: Rated 13+ on both stores.
 Made by: HiiPointe Games LLC, Kansas City.
 
