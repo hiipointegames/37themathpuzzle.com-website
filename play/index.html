@@ -132,6 +132,63 @@
   .foot a{padding:8px 6px;display:inline-block}
   .foot a:hover{color:var(--ink)}
 
+  /* ---- challenge view (Bryce 4b, David 2026-11-12 "mix D") ----
+     A share link from a known Daily wears that tier's colour, the same as the
+     share card: Easy green, Challenge cyan, Expert gold. --a / --ar / --a-ink are
+     set by the script (playView); with no share they stay unset and the page
+     keeps its magenta brand look. */
+  body.themed .btn-primary{
+    background:var(--a);color:var(--a-ink);
+    box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 8px 28px rgba(var(--ar),.45);
+  }
+  body.themed .btn-primary:hover{box-shadow:0 0 0 1px rgba(255,255,255,.28) inset,0 10px 34px rgba(var(--ar),.6)}
+  body.themed h1 .who{color:var(--a);text-shadow:0 0 14px rgba(var(--ar),.5)}
+  body.themed .cosmos{
+    background:
+      radial-gradient(ellipse 60% 45% at 78% 8%, rgba(var(--ar),.26), transparent 68%),
+      radial-gradient(ellipse 55% 42% at 12% 30%, rgba(177,59,255,.14), transparent 70%),
+      radial-gradient(ellipse 60% 45% at 40% 100%, rgba(var(--ar),.12), transparent 72%),
+      var(--bg);
+  }
+  .chip{
+    display:inline-block;margin:0 auto 14px;padding:5px 14px;border-radius:999px;
+    border:1px solid rgba(var(--ar,255,43,208),.6);color:var(--a,var(--magenta));
+    font-weight:700;font-size:.8rem;letter-spacing:.08em;
+  }
+  .vs{display:flex;align-items:stretch;gap:10px;margin:0 0 16px}
+  .side{flex:1;min-width:0;border-radius:16px;padding:12px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12)}
+  .side.them{border-color:rgba(var(--ar),.6);background:rgba(var(--ar),.08)}
+  .side .n{font-size:.85rem;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .side .t{font-family:'Fredoka',sans-serif;font-weight:700;font-size:2.2rem;margin-top:2px}
+  .side.them .t{color:var(--a);text-shadow:0 0 16px rgba(var(--ar),.55)}
+  .side.you .t{color:#5b5677}
+  .vsx{
+    align-self:center;flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+    font-family:'Fredoka',sans-serif;font-weight:700;color:#fff;background:var(--magenta);
+    box-shadow:0 0 18px rgba(255,43,208,.6);
+  }
+  .steps{display:grid;gap:8px;margin-top:16px;text-align:left}
+  .step{
+    display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);font-weight:600;font-size:.98rem;
+  }
+  .step .e{font-size:1.35rem;flex:none}
+  .dice{display:flex;gap:7px;justify-content:center;margin:0 0 20px}
+  .die{
+    width:40px;height:40px;border-radius:10px;display:grid;place-items:center;
+    font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.35rem;color:#1e293b;
+    background:linear-gradient(135deg,#f8fafc,#cbd5e1);
+    animation:drop .7s cubic-bezier(.3,1.5,.5,1) both;animation-delay:var(--d,0s);
+  }
+  .die.p{color:#fff;animation:drop .7s cubic-bezier(.3,1.5,.5,1) both, wig 1.8s ease-in-out infinite;animation-delay:var(--d,0s),var(--w,1s)}
+  .die.b{background:linear-gradient(135deg,#0284c7,#1e40af)}
+  .die.r{background:linear-gradient(135deg,#e11d48,#991b1b)}
+  .die.g{background:linear-gradient(135deg,#059669,#166534)}
+  @keyframes drop{from{transform:translateY(-120px) rotate(-90deg);opacity:0}to{transform:none;opacity:1}}
+  @keyframes wig{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-4deg)}}
+  @media (prefers-reduced-motion:reduce){ .die,.die.p{animation:none} }
+  .friend-card{display:block;width:100%;border-radius:14px;margin-top:18px}
+
   [hidden]{display:none !important}
 </style>
 </head>
@@ -143,8 +200,24 @@
 
 <main>
   <div class="card">
-    <img class="logo" src="/app-icon.webp" width="72" height="72" alt="37 - The Math Puzzle">
+    <img class="logo" id="logo" src="/app-icon.webp" width="72" height="72" alt="37 - The Math Puzzle">
+    <span class="chip" id="chip" hidden></span>
     <h1 id="headline">Today's 37 is waiting. <span class="turn">Your turn?</span></h1>
+
+    <!-- Plain link: seven dice tumble in, the 3 power dice wiggle. All "?" on
+         purpose: the page never knows (or shows) today's dice. -->
+    <div class="dice" id="dice" aria-hidden="true">
+      <span class="die" style="--d:.05s">?</span><span class="die" style="--d:.12s">?</span>
+      <span class="die" style="--d:.19s">?</span><span class="die" style="--d:.26s">?</span>
+      <span class="die p b" style="--d:.33s;--w:1.2s">?</span><span class="die p r" style="--d:.40s;--w:1.4s">?</span><span class="die p g" style="--d:.47s;--w:1.6s">?</span>
+    </div>
+
+    <!-- A friend's share: their time against an empty slot for yours. -->
+    <div class="vs" id="vs" hidden>
+      <div class="side them"><div class="n" id="vs-name"></div><div class="t" id="vs-value"></div></div>
+      <div class="vsx">VS</div>
+      <div class="side you"><div class="n">You</div><div class="t">?:??</div></div>
+    </div>
 
     <!-- iPhone / iPad -->
     <div class="actions" id="ios" hidden>
@@ -195,6 +268,11 @@
       </div>
     </noscript>
 
+    <div class="steps" id="steps"></div>
+
+    <!-- The friend's own share card, only once has_share_card says it is theirs. -->
+    <img class="friend-card" id="friend-card" alt="" hidden>
+
     <!-- Eligibility wording is legally load-bearing: copy EXACTLY, never paraphrase. -->
     <div class="prize">
       <p class="prize-h">🏆 $37 prize every week</p>
@@ -215,7 +293,6 @@
 
   var APP_STORE = 'https://apps.apple.com/app/id6762534650';
   var PACKAGE = 'com.hiipointegames.themathpuzzle37';
-  var MODE_NAMES = { daily: 'Challenge Daily', daily_easy: 'Easy Daily', daily_expert: 'Expert Daily' };
 
   // ---- starfield ----
   function makeStars(id, count, twMin, twMax){
@@ -305,32 +382,124 @@
     document.head.appendChild(s);
   }
 
-  // ---- headline (username via textContent only, never innerHTML) ----
+  /* <playView> ---------------------------------------------------------------
+     WHAT the page says for a share, as plain data: no DOM in here. The test
+     (play/playView.test.js) cuts this block out of the page and runs it, so the
+     rules are tested exactly as they ship. Mix D, David 2026-11-12:
+       solved   chip · "You've been challenged by @x ⚔️" · VS 0:31 · "Beat 0:31"
+       forfeit  chip · "37 beat @x today. Can you beat 37? 💀" · VS 💀
+       no name  chip · "Today's Expert Daily #202 is waiting. Your turn?" · dice
+       nothing  the generic page, magenta, tumbling dice
+     Usernames only ever travel as text parts; the DOM side uses textContent. */
+  var PLAY_THEMES = {
+    daily_easy:   { accent: '#27ff9e', rgb: '39, 255, 158', ink: '#04261a' },
+    daily:        { accent: '#1ff0ff', rgb: '31, 240, 255', ink: '#00262a' },
+    daily_expert: { accent: '#ffcf3a', rgb: '255, 207, 58', ink: '#231800' }
+  };
+  var PLAY_MODE_NAMES = { daily: 'Challenge Daily', daily_easy: 'Easy Daily', daily_expert: 'Expert Daily' };
+  var STEP_RULE = ['🎲', 'Use all 7 dice to make 37'];
+  var STEP_FRIEND = ['😎', "Add them as a friend and follow each other's times"];
+  var GENERIC_STEPS = [STEP_RULE, ['🌍', 'Same dice for everyone in the world today'], ['😎', 'Challenge your friends to beat your time']];
+
   function fmtTime(sec){
     sec = Math.max(0, Math.round(Number(sec)));
     var m = Math.floor(sec/60), r = sec % 60;
     return m + ':' + (r < 10 ? '0' : '') + r;
   }
-  function render(row){
-    var h = document.getElementById('headline');
-    var mode = MODE_NAMES[row.mode];
-    if (!mode) return;                          // unknown mode: keep the generic copy
+
+  /** @returns {{theme, chip, headline, vs, button, steps, dice}} */
+  function playView(row){
+    var generic = {
+      theme: null, chip: null,
+      headline: [["Today's 37 is waiting. "], ['Your turn?', 'turn']],
+      vs: null, button: null, steps: GENERIC_STEPS, dice: true
+    };
+    var mode = row && PLAY_MODE_NAMES[row.mode];
+    if (!mode) return generic;                  // unknown mode: the generic page
     var label = mode + (row.puzzle_number != null ? ' #' + row.puzzle_number : '');
-    var parts = [];                             // [text, className?]
-    if (row.username && row.result === 'forfeit'){
-      parts = [['37 beat '], ['@' + row.username, 'who'], [' on ' + label + '.']];
-    } else if (row.username && (row.result === 'solved' || row.result === 'perfect')){
-      var t = row.solve_seconds != null ? ' in ' + fmtTime(row.solve_seconds) : '';
-      parts = [['@' + row.username, 'who'], [" solved today's " + label + t + '.']];
+    var view = { theme: PLAY_THEMES[row.mode], chip: label.toUpperCase(), vs: null, button: null, dice: false };
+    var who = row.username ? '@' + row.username : null;
+
+    if (who && row.result === 'forfeit'){
+      view.headline = [['37 beat '], [who, 'who'], [' today. Can you beat 37? 💀']];
+      view.vs = { name: who, value: '💀' };
+      view.button = "Take on today's 37";
+      view.steps = [STEP_RULE, ['🧠', 'Do what ' + who + " couldn't"], STEP_FRIEND];
+    } else if (who && (row.result === 'solved' || row.result === 'perfect')){
+      var t = row.solve_seconds != null ? fmtTime(row.solve_seconds) : null;
+      view.headline = [["You've been challenged by "], [who, 'who'], [' ⚔️']];
+      view.vs = t ? { name: who, value: t } : null;
+      view.button = t ? 'Beat ' + t : 'Take the challenge';
+      view.steps = [STEP_RULE, ['⏱️', t ? 'Beat ' + who + "'s " + t : 'Beat ' + who + "'s time"], STEP_FRIEND];
     } else {
-      parts = [["Today's " + label + ' is waiting.']];
+      // A guest's share (no name) or a result we don't know: the Daily, themed.
+      view.headline = [["Today's " + label + ' is waiting. '], ['Your turn?', 'turn']];
+      view.steps = GENERIC_STEPS;
+      view.dice = true;
     }
-    parts.push([' Your turn?', 'turn']);
+    return view;
+  }
+  /* </playView> --------------------------------------------------------------- */
+
+  // ---- paint a view (username via textContent only, never innerHTML) ----
+  function render(view){
+    var body = document.body;
+    if (view.theme){
+      body.classList.add('themed');
+      body.style.setProperty('--a', view.theme.accent);
+      body.style.setProperty('--ar', view.theme.rgb);
+      body.style.setProperty('--a-ink', view.theme.ink);
+    }
+    var chip = document.getElementById('chip');
+    chip.hidden = !view.chip;
+    chip.textContent = view.chip || '';
+    document.getElementById('logo').hidden = !!view.chip;
+
+    var h = document.getElementById('headline');
     h.textContent = '';
-    parts.forEach(function(p){
+    view.headline.forEach(function(p){
       if (p[1]){ var sp = document.createElement('span'); sp.className = p[1]; sp.textContent = p[0]; h.appendChild(sp); }
       else h.appendChild(document.createTextNode(p[0]));
     });
+
+    document.getElementById('dice').hidden = !view.dice;
+    var vs = document.getElementById('vs');
+    vs.hidden = !view.vs;
+    if (view.vs){
+      document.getElementById('vs-name').textContent = view.vs.name;
+      document.getElementById('vs-value').textContent = view.vs.value;
+    }
+    if (view.button){
+      document.getElementById('ios-open').textContent = view.button;
+      document.getElementById('and-open').textContent = view.button;
+    }
+    var steps = document.getElementById('steps');
+    steps.textContent = '';
+    view.steps.forEach(function(s){
+      var d = document.createElement('div'); d.className = 'step';
+      var e = document.createElement('span'); e.className = 'e'; e.textContent = s[0];
+      d.appendChild(e); d.appendChild(document.createTextNode(s[1]));
+      steps.appendChild(d);
+    });
+  }
+  render(playView(null));
+
+  // The friend's own card, only when the server says this link's owner uploaded it
+  // (the same has_share_card check the link preview uses, api/_playMeta.js).
+  function showCard(){
+    fetch(SUPABASE_URL + '/rest/v1/rpc/has_share_card', {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_code: code })
+    }).then(function(r){ return r.ok ? r.json() : false; })
+      .then(function(ok){
+        if (ok !== true) return;
+        var img = document.getElementById('friend-card');
+        img.onload = function(){ img.hidden = false; };
+        img.alt = 'Their share card';
+        img.src = SUPABASE_URL + '/storage/v1/object/public/share-cards/' + code + '.jpg';
+      })
+      .catch(function(){});
   }
 
   logEvent('visit');
@@ -348,7 +517,9 @@
         var row = Array.isArray(rows) ? rows[0] : null;
         if (!row) return;
         if (row.closing_line) setLinks(String(row.closing_line));
-        render(row);
+        var view = playView(row);
+        render(view);
+        if (view.vs) showCard();
       })
       .catch(function(){});                     // generic copy stays; page still works
   }
