@@ -45,6 +45,94 @@
   },
   "redirects": [
     {
+      "source": "/privacy-policy",
+      "has": [
+        {
+          "type": "host",
+          "value": "hiipointegames.com"
+        }
+      ],
+      "destination": "https://www.37themathpuzzle.com/privacy",
+      "permanent": false
+    },
+    {
+      "source": "/terms-and-conditions",
+      "has": [
+        {
+          "type": "host",
+          "value": "hiipointegames.com"
+        }
+      ],
+      "destination": "https://www.37themathpuzzle.com/terms",
+      "permanent": false
+    },
+    {
+      "source": "/delete-account",
+      "has": [
+        {
+          "type": "host",
+          "value": "hiipointegames.com"
+        }
+      ],
+      "destination": "https://www.37themathpuzzle.com/delete-account",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "hiipointegames.com"
+        }
+      ],
+      "destination": "https://www.37themathpuzzle.com/",
+      "permanent": false
+    },
+    {
+      "source": "/privacy-policy",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.hiipointegames.com"
+        }
+      ],
+      "destination": "https://www.37themathpuzzle.com/privacy",
+      "permanent": false
+    },
+    {
+      "source": "/terms-and-conditions",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.hiipointegames.com"
+        }
+      ],
+      "destination": "https://www.37themathpuzzle.com/terms",
+      "permanent": false
+    },
+    {
+      "source": "/delete-account",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.hiipointegames.com"
+        }
+      ],
+      "destination": "https://www.37themathpuzzle.com/delete-account",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.hiipointegames.com"
+        }
+      ],
+      "destination": "https://www.37themathpuzzle.com/",
+      "permanent": false
+    },
+    {
       "source": "/draw",
       "destination": "/drawing",
       "permanent": true
