@@ -78,6 +78,17 @@
       "permanent": false
     },
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "hiipointegames.com"
+        }
+      ],
+      "destination": "https://www.37themathpuzzle.com/",
+      "permanent": false
+    },
+    {
       "source": "/:path*",
       "has": [
         {
@@ -119,6 +130,17 @@
         }
       ],
       "destination": "https://www.37themathpuzzle.com/delete-account",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.hiipointegames.com"
+        }
+      ],
+      "destination": "https://www.37themathpuzzle.com/",
       "permanent": false
     },
     {
